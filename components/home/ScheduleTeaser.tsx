@@ -4,11 +4,12 @@ import { Section } from "@/components/ui/Section";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { ButtonLink } from "@/components/ui/Button";
-import { nextStreamAt } from "@/lib/mock-data";
 import { useCountdown } from "@/lib/hooks/useCountdown";
+import { useSiteContent } from "@/lib/hooks/useSiteContent";
 
 export function ScheduleTeaser() {
-  const countdown = useCountdown(nextStreamAt);
+  const { data } = useSiteContent<{ date: string }>("next_stream_at");
+  const countdown = useCountdown(data ? new Date(data.date) : new Date());
 
   return (
     <Section>
@@ -23,7 +24,9 @@ export function ScheduleTeaser() {
           Next Stream Starts In
         </span>
         <div className="text-coin font-display flex gap-3 text-3xl">
-          {countdown ? (
+          {!data ? (
+            <span className="font-sans text-base font-normal text-ash-300">Check back soon</span>
+          ) : countdown ? (
             <>
               <span>{String(countdown.days).padStart(2, "0")}d</span>
               <span>{String(countdown.hours).padStart(2, "0")}h</span>

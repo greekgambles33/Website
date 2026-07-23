@@ -1,11 +1,18 @@
+"use client";
+
 import { Section } from "@/components/ui/Section";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Badge } from "@/components/ui/Badge";
-import { announcements } from "@/lib/mock-data";
+import { useSiteContent } from "@/lib/hooks/useSiteContent";
+import type { AnnouncementContent } from "@/lib/api";
 import { Pin } from "lucide-react";
 
 export function Announcements() {
+  const { data: announcements } = useSiteContent<AnnouncementContent[]>("announcements");
+
+  if (!announcements || announcements.length === 0) return null;
+
   return (
     <Section>
       <SectionHeading eyebrow="Stay Informed" title="Latest Announcements" />

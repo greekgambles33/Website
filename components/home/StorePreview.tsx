@@ -1,12 +1,20 @@
+"use client";
+
 import { Section } from "@/components/ui/Section";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { Coin } from "@/components/ui/Coin";
-import { storePreview } from "@/lib/mock-data";
+import { useSiteContent } from "@/lib/hooks/useSiteContent";
+import type { StoreItemContent } from "@/lib/api";
 
 export function StorePreview() {
+  const { data: allItems } = useSiteContent<StoreItemContent[]>("store");
+  const items = (allItems ?? []).slice(0, 4);
+
+  if (items.length === 0) return null;
+
   return (
     <Section id="store">
       <SectionHeading
@@ -16,7 +24,7 @@ export function StorePreview() {
       />
 
       <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {storePreview.map((item) => (
+        {items.map((item) => (
           <GlassCard key={item.id} className="flex flex-col">
             {item.limited && (
               <Badge tone="gold" className="w-fit">

@@ -5,12 +5,24 @@ import { Play, Eye, Dices } from "lucide-react";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { InlineStat } from "@/components/ui/InlineStat";
 import { Torii } from "@/components/effects/Torii";
-import { streamStatus, heroHighlights } from "@/lib/mock-data";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { loginWithDiscord } from "@/lib/auth";
+import { useSiteContent } from "@/lib/hooks/useSiteContent";
+import type { StreamStatusContent, HeroHighlight } from "@/lib/api";
+
+const fallbackStream: StreamStatusContent = {
+  isLive: false,
+  title: "",
+  category: "",
+  viewers: 0,
+  uptimeMinutes: 0,
+};
 
 export function Hero() {
   const { user, loading } = useAuth();
+  const { data: streamData } = useSiteContent<StreamStatusContent>("stream_status");
+  const { data: heroHighlights } = useSiteContent<HeroHighlight[]>("hero_highlights");
+  const streamStatus = streamData ?? fallbackStream;
 
   return (
     <section
@@ -67,11 +79,13 @@ export function Hero() {
           Official Casino Partner &mdash; Play on Lockly.io
         </a>
 
-        <div className="mt-9 flex gap-9">
-          {heroHighlights.map((h) => (
-            <InlineStat key={h.label} label={h.label} value={h.value} />
-          ))}
-        </div>
+        {heroHighlights && heroHighlights.length > 0 && (
+          <div className="mt-9 flex gap-9">
+            {heroHighlights.map((h) => (
+              <InlineStat key={h.label} label={h.label} value={h.value} />
+            ))}
+          </div>
+        )}
       </motion.div>
 
       <motion.div

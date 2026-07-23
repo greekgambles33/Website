@@ -47,6 +47,11 @@ export const API_ENDPOINTS = {
   TOURNAMENT_PARTICIPANT_REROLL: (id: string, participantId: string) =>
     `${API_URL}/api/tournaments/${id}/participants/${participantId}/reroll`,
   TOURNAMENT_MATCH_WINNER: (matchId: string) => `${API_URL}/api/tournaments/matches/${matchId}/winner`,
+
+  SITE_CONTENT_ALL: `${API_URL}/api/site-content`,
+  SITE_CONTENT: (key: string) => `${API_URL}/api/site-content/${key}`,
+
+  LEADERBOARD: `${API_URL}/api/leaderboard`,
 } as const;
 
 export interface PublicUser {
@@ -186,4 +191,98 @@ export interface FullTournament extends Tournament {
   entries: TournamentEntry[];
   participants: TournamentParticipant[];
   matches: TournamentMatch[];
+}
+
+// ---------- Admin-editable site content ----------
+
+export interface StreamStatusContent {
+  isLive: boolean;
+  title: string;
+  category: string;
+  viewers: number;
+  uptimeMinutes: number;
+}
+
+export interface HeroHighlight {
+  label: string;
+  value: string;
+}
+
+export interface ScheduleDay {
+  day: string;
+  date: string;
+  time: string;
+  title: string;
+  live: boolean;
+  off?: boolean;
+}
+
+export interface CommunityStat {
+  label: string;
+  value: number;
+}
+
+export interface AnnouncementContent {
+  id: string;
+  title: string;
+  body: string;
+  date: string;
+  pinned?: boolean;
+}
+
+export interface StoreItemContent {
+  id: string;
+  name: string;
+  price: number;
+  category: string;
+  limited: boolean;
+}
+
+export interface GiveawayContent {
+  title: string;
+  entriesOpen: boolean;
+  entryCost: number;
+  freeEntryAvailable: boolean;
+  endsAt: string;
+  totalEntries: number;
+}
+
+export interface UpcomingGiveawayContent {
+  id: string;
+  title: string;
+  startsAt: string;
+  entryCost: number;
+  freeEntryAvailable: boolean;
+}
+
+export interface LatestWinnerContent {
+  id: string;
+  username: string;
+  prize: string;
+  date: string;
+}
+
+export interface CommunityHighlightContent {
+  id: string;
+  username: string;
+  quote: string;
+}
+
+export interface GameContent {
+  id: string;
+  name: string;
+  description: string;
+  status: string;
+  participants: number;
+  href?: string;
+  howToPlay?: string;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  userId: string;
+  username: string;
+  avatarUrl: string | null;
+  coins: number;
+  tier: string;
 }

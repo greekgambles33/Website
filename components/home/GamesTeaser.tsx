@@ -1,9 +1,12 @@
+"use client";
+
 import { Section } from "@/components/ui/Section";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
-import { featuredGames } from "@/lib/mock-data";
+import { useSiteContent } from "@/lib/hooks/useSiteContent";
+import type { GameContent } from "@/lib/api";
 
 const statusTone = {
   Live: "live",
@@ -12,7 +15,10 @@ const statusTone = {
 } as const;
 
 export function GamesTeaser() {
-  const games = featuredGames.slice(0, 2);
+  const { data: allGames } = useSiteContent<GameContent[]>("games");
+  const games = (allGames ?? []).slice(0, 2);
+
+  if (games.length === 0) return null;
 
   return (
     <Section id="games">
@@ -25,7 +31,11 @@ export function GamesTeaser() {
       <div className="mt-12 grid gap-6 sm:grid-cols-2">
         {games.map((game) => (
           <GlassCard key={game.id} className="flex flex-col">
-            <Badge tone={statusTone[game.status as keyof typeof statusTone]} pulse={game.status === "Live"} className="w-fit">
+            <Badge
+              tone={statusTone[game.status as keyof typeof statusTone] ?? "neutral"}
+              pulse={game.status === "Live"}
+              className="w-fit"
+            >
               {game.status}
             </Badge>
             <h3 className="mt-4 text-lg font-semibold text-white">{game.name}</h3>
@@ -35,10 +45,10 @@ export function GamesTeaser() {
                 {game.participants.toLocaleString()} participants
               </p>
             )}
-            {"href" in game && game.href && (
+            {game.href && (
               <div className="mt-5">
                 <ButtonLink href={game.href} size="sm" variant="secondary">
-                  {game.id === "bonus-hunt" ? "View Hunt" : "View Tournament"}
+                  View {game.name}
                 </ButtonLink>
               </div>
             )}

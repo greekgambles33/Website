@@ -1,17 +1,17 @@
-import type { Metadata } from "next";
+"use client";
+
 import { Section } from "@/components/ui/Section";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Badge } from "@/components/ui/Badge";
 import { Coin } from "@/components/ui/Coin";
-import { storeCatalog, storeCategories } from "@/lib/mock-data";
-
-export const metadata: Metadata = {
-  title: "Store | GreekGodBerry",
-  description: "Spend HellCatCoins on bonus buys, Discord perks, merch and event tickets.",
-};
+import { useSiteContent } from "@/lib/hooks/useSiteContent";
+import type { StoreItemContent } from "@/lib/api";
 
 export default function StorePage() {
+  const { data: items } = useSiteContent<StoreItemContent[]>("store");
+  const categories = Array.from(new Set((items ?? []).map((i) => i.category)));
+
   return (
     <Section>
       <SectionHeading
@@ -20,20 +20,19 @@ export default function StorePage() {
         description="Trade HellCatCoins for rewards — from bonus buys to VIP perks."
       />
 
-      <div className="mt-14 space-y-14">
-        {storeCategories
-          .filter((category) => category !== "All")
-          .map((category) => {
-            const items = storeCatalog.filter((item) => item.category === category);
-            if (items.length === 0) return null;
-
+      {!items || items.length === 0 ? (
+        <p className="mt-14 text-center text-sm text-ash-400">The store isn&apos;t stocked yet — check back soon.</p>
+      ) : (
+        <div className="mt-14 space-y-14">
+          {categories.map((category) => {
+            const categoryItems = items.filter((item) => item.category === category);
             return (
               <div key={category}>
                 <h3 className="font-heading text-sm font-bold uppercase tracking-[0.2em] text-ash-300">
                   {category}
                 </h3>
                 <div className="mt-5 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                  {items.map((item) => (
+                  {categoryItems.map((item) => (
                     <GlassCard key={item.id} className="flex flex-col">
                       {item.limited && (
                         <Badge tone="gold" className="w-fit">
@@ -53,7 +52,8 @@ export default function StorePage() {
               </div>
             );
           })}
-      </div>
+        </div>
+      )}
     </Section>
   );
 }

@@ -1,16 +1,23 @@
+"use client";
+
 import { Section } from "@/components/ui/Section";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { latestWinners } from "@/lib/mock-data";
+import { useSiteContent } from "@/lib/hooks/useSiteContent";
+import type { LatestWinnerContent } from "@/lib/api";
 import { Trophy } from "lucide-react";
 
 export function LatestWinners() {
+  const { data: winners } = useSiteContent<LatestWinnerContent[]>("latest_winners");
+
+  if (!winners || winners.length === 0) return null;
+
   return (
     <Section>
       <SectionHeading eyebrow="Hall of Flame" title="Latest Winners" />
 
       <div className="mt-12 grid gap-6 sm:grid-cols-3">
-        {latestWinners.map((winner) => (
+        {winners.map((winner) => (
           <GlassCard key={winner.id} className="flex items-center gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gold-500/10 text-gold-400">
               <Trophy size={22} />

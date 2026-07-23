@@ -36,6 +36,7 @@ model User {
   createdTournaments     Tournament[]             @relation("TournamentCreator")
   tournamentEntries      TournamentEntry[]        @relation("TournamentEntries")
   tournamentParticipations TournamentParticipant[] @relation("TournamentParticipants")
+  siteContentEdits       SiteContent[]
 
   @@index([kickUsername], map: "idx_users_kick_username")
   @@map("users")
@@ -196,4 +197,20 @@ model TournamentMatch {
 
   @@unique([tournamentId, round, matchNumber])
   @@map("tournament_matches")
+}
+
+/// Admin-editable homepage/site content, keyed by section. Shape of `data`
+/// depends on `key` — validated server-side in SiteContentService, not by
+/// the database. Lets the admin dashboard manage copy that used to be
+/// hardcoded (schedule, announcements, store, giveaway, etc.) without a
+/// schema change per section.
+model SiteContent {
+  key         String   @id
+  data        Json
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  updatedById String?  @map("updated_by_id")
+
+  updatedBy User? @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@map("site_content")
 }

@@ -13,6 +13,8 @@ import authRoutes from "@/routes/auth";
 import adminRoutes from "@/routes/admin";
 import huntRoutes from "@/routes/hunts";
 import tournamentRoutes from "@/routes/tournament";
+import siteContentRoutes from "@/routes/siteContent";
+import leaderboardRoutes from "@/routes/leaderboard";
 
 const app = express();
 
@@ -35,6 +37,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/hunts", huntRoutes);
 app.use("/api/tournaments", tournamentRoutes);
+app.use("/api/site-content", siteContentRoutes);
+app.use("/api/leaderboard", leaderboardRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

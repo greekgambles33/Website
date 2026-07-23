@@ -5,12 +5,16 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
-import { giveawayPreview } from "@/lib/mock-data";
+import { useSiteContent } from "@/lib/hooks/useSiteContent";
+import type { GiveawayContent } from "@/lib/api";
 import { useCountdown } from "@/lib/hooks/useCountdown";
 import { Gift, Ticket } from "lucide-react";
 
 export function GiveawayPreview() {
-  const countdown = useCountdown(giveawayPreview.endsAt);
+  const { data: giveaway } = useSiteContent<GiveawayContent>("giveaway");
+  const countdown = useCountdown(giveaway ? new Date(giveaway.endsAt) : new Date());
+
+  if (!giveaway) return null;
 
   return (
     <Section id="giveaways">
@@ -24,13 +28,13 @@ export function GiveawayPreview() {
             </div>
             <div>
               <h3 className="text-lg font-semibold text-white">
-                {giveawayPreview.title}
+                {giveaway.title}
               </h3>
               <p className="mt-1 flex items-center justify-center gap-1.5 text-xs text-ash-300 sm:justify-start">
                 <Ticket size={14} className="text-lava-400" />
-                {giveawayPreview.totalEntries.toLocaleString()} entries ·{" "}
-                {giveawayPreview.entryCost.toLocaleString()} HellCatCoins per entry
-                {giveawayPreview.freeEntryAvailable && " · free entry available"}
+                {giveaway.totalEntries.toLocaleString()} entries ·{" "}
+                {giveaway.entryCost.toLocaleString()} HellCatCoins per entry
+                {giveaway.freeEntryAvailable && " · free entry available"}
               </p>
             </div>
           </div>
@@ -47,8 +51,8 @@ export function GiveawayPreview() {
                 <span className="text-sm font-normal text-ash-300">Loading…</span>
               )}
             </div>
-            <Badge tone={giveawayPreview.entriesOpen ? "lava" : "neutral"}>
-              {giveawayPreview.entriesOpen ? "Entries Open" : "Entries Closed"}
+            <Badge tone={giveaway.entriesOpen ? "lava" : "neutral"}>
+              {giveaway.entriesOpen ? "Entries Open" : "Entries Closed"}
             </Badge>
           </div>
         </div>
