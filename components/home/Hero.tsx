@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Play, Eye } from "lucide-react";
+import { Play, Eye, Dices } from "lucide-react";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { InlineStat } from "@/components/ui/InlineStat";
 import { Torii } from "@/components/effects/Torii";
@@ -57,7 +57,17 @@ export function Hero() {
           </ButtonLink>
         </div>
 
-        <div className="mt-11 flex gap-9">
+        <a
+          href="https://lockly.io/r/greek33"
+          target="_blank"
+          rel="noopener noreferrer sponsored"
+          className="mt-5 inline-flex w-fit items-center gap-2 rounded-full border border-gold-500/30 bg-gold-500/10 px-4 py-2 text-xs font-semibold text-gold-300 transition-colors hover:border-gold-400/50 hover:text-gold-200"
+        >
+          <Dices size={14} />
+          Official Casino Partner &mdash; Play on Lockly.io
+        </a>
+
+        <div className="mt-9 flex gap-9">
           {heroHighlights.map((h) => (
             <InlineStat key={h.label} label={h.label} value={h.value} />
           ))}

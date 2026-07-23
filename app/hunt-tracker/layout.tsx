@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { Coin } from "@/components/ui/Coin";
 
 export default function HuntTrackerLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -25,14 +26,14 @@ export default function HuntTrackerLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-20 pt-28 sm:px-6 lg:px-8">
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="font-heading text-xs font-bold uppercase tracking-[0.3em] text-lava-500">
-            Moderator Tools
-          </p>
-          <h1 className="text-ember text-3xl sm:text-4xl">Hunt Tracker</h1>
-        </div>
+    <div className="mx-auto max-w-7xl px-4 pb-20 pt-10 sm:px-6 lg:px-8">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-white/5 pb-6">
+        <Link href="/" className="font-heading flex items-center gap-2.5 text-base font-bold uppercase tracking-wide">
+          <Coin size="sm" />
+          <span>
+            Greek<span className="text-lava-400">God</span>Berry <span className="text-ash-400">Admin</span>
+          </span>
+        </Link>
         <Link
           href="/"
           className="font-heading flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-ash-300 transition-colors hover:text-white"
@@ -40,6 +41,11 @@ export default function HuntTrackerLayout({ children }: { children: React.ReactN
           <ArrowLeft size={14} />
           Back to Site
         </Link>
+      </div>
+
+      <div className="mb-8">
+        <p className="font-heading text-xs font-bold uppercase tracking-[0.3em] text-lava-500">Moderator Tools</p>
+        <h1 className="text-ember text-3xl sm:text-4xl">Hunt Tracker</h1>
       </div>
 
       {children}

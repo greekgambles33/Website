@@ -47,10 +47,12 @@ export function ButtonLink({
   size = "md",
   className,
   href,
+  target,
+  rel,
   children,
-}: CommonProps & { href: string; children: React.ReactNode }) {
+}: CommonProps & { href: string; target?: string; rel?: string; children: React.ReactNode }) {
   return (
-    <Link href={href} className={cn(base, variants[variant], sizes[size], className)}>
+    <Link href={href} target={target} rel={rel} className={cn(base, variants[variant], sizes[size], className)}>
       {children}
     </Link>
   );
