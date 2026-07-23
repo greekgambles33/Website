@@ -13,10 +13,12 @@ import { socials } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 
 const links = [
-  { label: "Leaderboard", href: "/leaderboard" },
+  { label: "Schedule", href: "/schedule" },
   { label: "Games", href: "/games" },
   { label: "Store", href: "/store" },
+  { label: "Leaderboard", href: "/leaderboard" },
   { label: "Giveaways", href: "/giveaways" },
+  { label: "About", href: "/about" },
 ];
 
 export function Navbar() {
