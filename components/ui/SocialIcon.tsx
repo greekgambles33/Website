@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-type IconKey = "instagram" | "discord" | "kick" | "youtube" | "x" | "tiktok";
+type IconKey = "instagram" | "discord" | "kick" | "youtube" | "x" | "tiktok" | "twitch";
 
 const keyByName: Record<string, IconKey> = {
   Instagram: "instagram",
@@ -9,6 +9,7 @@ const keyByName: Record<string, IconKey> = {
   YouTube: "youtube",
   X: "x",
   TikTok: "tiktok",
+  Twitch: "twitch",
 };
 
 const hoverClass: Record<IconKey, string> = {
@@ -18,6 +19,7 @@ const hoverClass: Record<IconKey, string> = {
   youtube: "group-hover:border-[#ff2d0f] group-hover:bg-[#ff2d0f]/10",
   x: "group-hover:border-ash-100 group-hover:bg-white/10",
   tiktok: "group-hover:border-[#25f4ee] group-hover:bg-[#25f4ee]/10",
+  twitch: "group-hover:border-[#9146ff] group-hover:bg-[#9146ff]/10",
 };
 
 const strokeProps = {
@@ -59,6 +61,12 @@ const glyphs: Record<IconKey, React.ReactNode> = {
       d="M13 3v10.8a3 3 0 1 1-2.4-2.94M13 3c.4 2.3 2 3.9 4.3 4.2M13 3h3.5"
       {...strokeProps}
     />
+  ),
+  twitch: (
+    <>
+      <path d="M5 3.5h14v10.5l-3.5 3.5H12l-2.5 2.5H8v-2.5H5V3.5z" {...strokeProps} />
+      <path d="M12.5 7v4M16 7v4" {...strokeProps} />
+    </>
   ),
 };
 
