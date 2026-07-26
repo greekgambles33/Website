@@ -5,11 +5,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
-import { SocialIcon } from "@/components/ui/SocialIcon";
 import { Coin } from "@/components/ui/Coin";
 import { AuthButton } from "@/components/layout/AuthButton";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { socials } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 
 const links = [
@@ -70,13 +68,6 @@ export function Navbar() {
         </div>
 
         <div className="hidden items-center gap-4 lg:flex">
-          <div className="flex items-center gap-2">
-            {socials.slice(0, 3).map((s) => (
-              <a key={s.name} href={s.href} className="group" aria-label={s.name}>
-                <SocialIcon name={s.name} />
-              </a>
-            ))}
-          </div>
           {user && (
             <div className="flex items-center gap-2 rounded-full border border-lava-400/40 bg-ash-950/60 px-3.5 py-1.5">
               <Coin size="xs" />
@@ -128,13 +119,6 @@ export function Navbar() {
                 </div>
               )}
               <AuthButton className="mt-3" fullWidth />
-              <div className="mt-4 flex items-center gap-3 px-3">
-                {socials.map((s) => (
-                  <a key={s.name} href={s.href} className="group" aria-label={s.name}>
-                    <SocialIcon name={s.name} />
-                  </a>
-                ))}
-              </div>
             </div>
           </motion.div>
         )}
