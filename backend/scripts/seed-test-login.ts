@@ -17,6 +17,8 @@ async function main() {
     isModerator: user.isModerator,
     kickUsername: user.kickUsername,
     kickVerified: user.kickVerified,
+    twitchUsername: user.twitchUsername,
+    twitchVerified: user.twitchVerified,
     catCoinBalance: user.catCoinBalance,
     totalEarned: user.totalEarned,
     totalSpent: user.totalSpent,

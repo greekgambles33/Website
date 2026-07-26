@@ -18,4 +18,8 @@ router.post("/kick-verify/initiate", authMiddleware, AuthController.initiateKick
 router.get("/kick-verify/status", authMiddleware, AuthController.checkKickVerifyStatus);
 router.delete("/kick/unlink", authMiddleware, AuthController.unlinkKick);
 
+router.get("/twitch-verify/initiate", authLimiter, authMiddleware, AuthController.initiateTwitchVerify);
+router.get("/twitch/callback", authLimiter, AuthController.handleTwitchCallback);
+router.delete("/twitch/unlink", authMiddleware, AuthController.unlinkTwitch);
+
 export default router;

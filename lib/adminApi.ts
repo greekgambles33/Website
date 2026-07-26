@@ -24,7 +24,7 @@ async function authedFetch<T>(url: string, options: RequestInit = {}): Promise<T
   return data as T;
 }
 
-export type UserFilter = "all" | "suspended" | "admins" | "moderators" | "kick_pending";
+export type UserFilter = "all" | "suspended" | "admins" | "moderators" | "kick_pending" | "twitch_pending";
 
 export async function fetchAdminStats(): Promise<AdminStats> {
   const data = await authedFetch<{ stats: AdminStats }>(API_ENDPOINTS.ADMIN_STATS);
@@ -95,5 +95,19 @@ export async function editUserKickUsername(userId: string, kickUsername: string 
   await authedFetch(API_ENDPOINTS.ADMIN_USER_KICK_USERNAME(userId), {
     method: "PUT",
     body: JSON.stringify({ kickUsername }),
+  });
+}
+
+export async function verifyUserTwitch(userId: string, verified: boolean): Promise<void> {
+  await authedFetch(API_ENDPOINTS.ADMIN_USER_VERIFY_TWITCH(userId), {
+    method: "PUT",
+    body: JSON.stringify({ verified }),
+  });
+}
+
+export async function editUserTwitchUsername(userId: string, twitchUsername: string | null): Promise<void> {
+  await authedFetch(API_ENDPOINTS.ADMIN_USER_TWITCH_USERNAME(userId), {
+    method: "PUT",
+    body: JSON.stringify({ twitchUsername }),
   });
 }

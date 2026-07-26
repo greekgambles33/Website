@@ -10,6 +10,8 @@ export const API_ENDPOINTS = {
   KICK_VERIFY_INITIATE: `${API_URL}/api/auth/kick-verify/initiate`,
   KICK_VERIFY_STATUS: `${API_URL}/api/auth/kick-verify/status`,
   KICK_UNLINK: `${API_URL}/api/auth/kick/unlink`,
+  TWITCH_VERIFY_INITIATE: `${API_URL}/api/auth/twitch-verify/initiate`,
+  TWITCH_UNLINK: `${API_URL}/api/auth/twitch/unlink`,
 
   ADMIN_STATS: `${API_URL}/api/admin/stats`,
   ADMIN_AUDIT_LOGS: `${API_URL}/api/admin/audit-logs`,
@@ -17,6 +19,8 @@ export const API_ENDPOINTS = {
   ADMIN_USER: (userId: string) => `${API_URL}/api/admin/users/${userId}`,
   ADMIN_USER_VERIFY_KICK: (userId: string) => `${API_URL}/api/admin/users/${userId}/verify-kick`,
   ADMIN_USER_KICK_USERNAME: (userId: string) => `${API_URL}/api/admin/users/${userId}/kick-username`,
+  ADMIN_USER_VERIFY_TWITCH: (userId: string) => `${API_URL}/api/admin/users/${userId}/verify-twitch`,
+  ADMIN_USER_TWITCH_USERNAME: (userId: string) => `${API_URL}/api/admin/users/${userId}/twitch-username`,
   ADMIN_USER_COINS: (userId: string) => `${API_URL}/api/admin/users/${userId}/coins`,
   ADMIN_USER_SUSPEND: (userId: string) => `${API_URL}/api/admin/users/${userId}/suspend`,
   ADMIN_USER_MODERATOR: (userId: string) => `${API_URL}/api/admin/users/${userId}/moderator`,
@@ -63,6 +67,8 @@ export interface PublicUser {
   isModerator: boolean;
   kickUsername: string | null;
   kickVerified: boolean;
+  twitchUsername: string | null;
+  twitchVerified: boolean;
   catCoinBalance: number;
   totalEarned: number;
   totalSpent: number;
@@ -81,6 +87,8 @@ export interface AdminStats {
   moderatorCount: number;
   kickVerifiedCount: number;
   kickPendingCount: number;
+  twitchVerifiedCount: number;
+  twitchPendingCount: number;
   newUsersLast7Days: number;
   totalCoinsInCirculation: number;
 }

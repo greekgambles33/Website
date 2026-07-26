@@ -106,6 +106,8 @@ export default function AdminOverviewPage() {
           <StatCard icon={ShieldCheck} label="Moderators" value={stats.moderatorCount.toLocaleString()} />
           <StatCard icon={Link2} label="Kick Verified" value={stats.kickVerifiedCount.toLocaleString()} />
           <StatCard icon={Link2} label="Kick Pending" value={stats.kickPendingCount.toLocaleString()} tone="warn" />
+          <StatCard icon={Link2} label="Twitch Verified" value={stats.twitchVerifiedCount.toLocaleString()} />
+          <StatCard icon={Link2} label="Twitch Pending" value={stats.twitchPendingCount.toLocaleString()} tone="warn" />
         </div>
       </div>
 

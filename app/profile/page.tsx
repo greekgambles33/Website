@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Coins, Copy, Check, ShieldCheck, Clock, Link2, Loader2 } from "lucide-react";
 import { Section } from "@/components/ui/Section";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -22,9 +22,10 @@ function authHeaders(): HeadersInit {
   };
 }
 
-export default function ProfilePage() {
+function ProfileContent() {
   const { user, loading, refresh } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [kickUsernameInput, setKickUsernameInput] = useState("");
   const [kickStep, setKickStep] = useState<KickStep>("idle");
@@ -33,6 +34,9 @@ export default function ProfilePage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const [twitchConnecting, setTwitchConnecting] = useState(false);
+  const [twitchMessage, setTwitchMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
     if (!loading && !user) router.push("/");
@@ -43,6 +47,22 @@ export default function ProfilePage() {
       if (pollRef.current) clearInterval(pollRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    const twitchResult = searchParams.get("twitch");
+    if (!twitchResult) return;
+
+    // One-time parse of the Twitch OAuth redirect's query string on mount.
+    if (twitchResult === "success") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTwitchMessage({ type: "success", text: "Twitch account linked!" });
+      refresh();
+    } else if (twitchResult === "error") {
+      setTwitchMessage({ type: "error", text: searchParams.get("message") || "Failed to link Twitch account" });
+    }
+    router.replace("/profile");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const kickVerified = !!user?.kickVerified && !!user.kickUsername;
   const kickPending = !!user?.kickUsername && !user.kickVerified;
@@ -110,6 +130,35 @@ export default function ProfilePage() {
     navigator.clipboard.writeText(`!verify ${kickCode}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleTwitchConnect = async () => {
+    setTwitchConnecting(true);
+    setTwitchMessage(null);
+    try {
+      const res = await fetch(API_ENDPOINTS.TWITCH_VERIFY_INITIATE, {
+        credentials: "include",
+        headers: authHeaders(),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.authUrl) throw new Error(data.error || "Failed to start Twitch verification");
+      window.location.href = data.authUrl;
+    } catch (err) {
+      setTwitchMessage({
+        type: "error",
+        text: err instanceof Error ? err.message : "Failed to start Twitch verification",
+      });
+      setTwitchConnecting(false);
+    }
+  };
+
+  const handleTwitchUnlink = async () => {
+    await fetch(API_ENDPOINTS.TWITCH_UNLINK, {
+      method: "DELETE",
+      credentials: "include",
+      headers: authHeaders(),
+    });
+    await refresh();
   };
 
   if (loading || !user) {
@@ -233,6 +282,41 @@ export default function ProfilePage() {
           </div>
         </GlassCard>
 
+        <GlassCard id="twitch-section">
+          <div className="flex items-center gap-2">
+            <ShieldCheck size={18} className="text-lava-400" />
+            <h2 className="text-lg font-semibold text-white">Link Your Twitch Account</h2>
+          </div>
+          <p className="mt-1 text-sm text-ash-300">
+            Optional — link your Twitch to verify it&apos;s really you.
+          </p>
+
+          <div className="mt-5">
+            {user.twitchVerified && user.twitchUsername ? (
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <Badge tone="lava">Verified</Badge>
+                  <span className="text-sm font-medium text-white">{user.twitchUsername}</span>
+                </div>
+                <Button variant="secondary" size="sm" onClick={handleTwitchUnlink}>
+                  Unlink
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-start gap-3">
+                <Button disabled={twitchConnecting} onClick={handleTwitchConnect}>
+                  {twitchConnecting ? "Redirecting…" : "Connect Twitch"}
+                </Button>
+              </div>
+            )}
+            {twitchMessage && (
+              <p className={`mt-3 text-xs ${twitchMessage.type === "success" ? "text-lava-300" : "text-crimson-400"}`}>
+                {twitchMessage.text}
+              </p>
+            )}
+          </div>
+        </GlassCard>
+
         <div className="grid gap-6 sm:grid-cols-3">
           <GlassCard className="text-center">
             <p className="text-xs uppercase tracking-widest text-ash-300">Balance</p>
@@ -249,5 +333,19 @@ export default function ProfilePage() {
         </div>
       </div>
     </Section>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[70vh] items-center justify-center">
+          <Loader2 size={28} className="animate-spin text-lava-400" />
+        </div>
+      }
+    >
+      <ProfileContent />
+    </Suspense>
   );
 }

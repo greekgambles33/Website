@@ -21,6 +21,8 @@ export interface PublicUser {
   isModerator: boolean;
   kickUsername: string | null;
   kickVerified: boolean;
+  twitchUsername: string | null;
+  twitchVerified: boolean;
   catCoinBalance: number;
   totalEarned: number;
   totalSpent: number;
@@ -45,6 +47,8 @@ function toPublicUser(user: {
   isModerator: boolean;
   kickUsername: string | null;
   kickVerified: boolean;
+  twitchUsername: string | null;
+  twitchVerified: boolean;
   catCoinBalance: number;
   totalEarned: number;
   totalSpent: number;
@@ -59,6 +63,8 @@ function toPublicUser(user: {
     isModerator: user.isModerator,
     kickUsername: user.kickUsername,
     kickVerified: user.kickVerified,
+    twitchUsername: user.twitchUsername,
+    twitchVerified: user.twitchVerified,
     catCoinBalance: user.catCoinBalance,
     totalEarned: user.totalEarned,
     totalSpent: user.totalSpent,

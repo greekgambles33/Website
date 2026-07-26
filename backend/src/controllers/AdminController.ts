@@ -13,6 +13,8 @@ const userListSelect = {
   isSuspended: true,
   kickUsername: true,
   kickVerified: true,
+  twitchUsername: true,
+  twitchVerified: true,
   catCoinBalance: true,
   totalEarned: true,
   totalSpent: true,
@@ -20,7 +22,7 @@ const userListSelect = {
   lastActiveAt: true,
 } satisfies Prisma.UserSelect;
 
-const FILTERS = ["all", "suspended", "admins", "moderators", "kick_pending"] as const;
+const FILTERS = ["all", "suspended", "admins", "moderators", "kick_pending", "twitch_pending"] as const;
 type Filter = (typeof FILTERS)[number];
 
 function parsePagination(req: Request) {
@@ -48,6 +50,7 @@ export const AdminController = {
         OR: [
           { displayName: { contains: search, mode: "insensitive" } },
           { kickUsername: { contains: search, mode: "insensitive" } },
+          { twitchUsername: { contains: search, mode: "insensitive" } },
           { discordId: { contains: search } },
         ],
       }),
@@ -55,6 +58,7 @@ export const AdminController = {
       ...(filter === "admins" && { isAdmin: true }),
       ...(filter === "moderators" && { isModerator: true }),
       ...(filter === "kick_pending" && { kickUsername: { not: null }, kickVerified: false }),
+      ...(filter === "twitch_pending" && { twitchUsername: { not: null }, twitchVerified: false }),
     };
 
     const [users, total] = await Promise.all([
@@ -82,6 +86,8 @@ export const AdminController = {
       moderatorCount,
       kickVerifiedCount,
       kickPendingCount,
+      twitchVerifiedCount,
+      twitchPendingCount,
       newUsersLast7Days,
       coinAgg,
     ] = await Promise.all([
@@ -91,6 +97,8 @@ export const AdminController = {
       prisma.user.count({ where: { isModerator: true } }),
       prisma.user.count({ where: { kickVerified: true } }),
       prisma.user.count({ where: { kickUsername: { not: null }, kickVerified: false } }),
+      prisma.user.count({ where: { twitchVerified: true } }),
+      prisma.user.count({ where: { twitchUsername: { not: null }, twitchVerified: false } }),
       prisma.user.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
       prisma.user.aggregate({ _sum: { catCoinBalance: true } }),
     ]);
@@ -104,6 +112,8 @@ export const AdminController = {
         moderatorCount,
         kickVerifiedCount,
         kickPendingCount,
+        twitchVerifiedCount,
+        twitchPendingCount,
         newUsersLast7Days,
         totalCoinsInCirculation: coinAgg._sum.catCoinBalance ?? 0,
       },
@@ -167,6 +177,50 @@ export const AdminController = {
       await tx.user.update({ where: { id: userId }, data: { kickUsername: kickUsername || null } });
       await tx.auditLog.create({
         data: { adminId: req.user!.id, targetId: userId, action: "kick.edit_username", details: { kickUsername } },
+      });
+    });
+
+    res.json({ success: true });
+  }),
+
+  verifyTwitchUsername: asyncHandler(async (req: Request, res: Response) => {
+    const { userId } = req.params;
+    const { verified } = req.body as { verified?: boolean };
+    if (typeof verified !== "boolean") throw createError.badRequest("verified must be a boolean");
+
+    await prisma.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({ where: { id: userId }, select: { twitchUsername: true } });
+      if (!user) throw createError.notFound("User not found");
+      if (!user.twitchUsername) throw createError.badRequest("User has no Twitch username to verify");
+
+      await tx.user.update({ where: { id: userId }, data: { twitchVerified: verified } });
+      await tx.auditLog.create({
+        data: {
+          adminId: req.user!.id,
+          targetId: userId,
+          action: verified ? "twitch.verify" : "twitch.unverify",
+        },
+      });
+    });
+
+    res.json({ success: true });
+  }),
+
+  editTwitchUsername: asyncHandler(async (req: Request, res: Response) => {
+    const { userId } = req.params;
+    const { twitchUsername } = req.body as { twitchUsername?: string | null };
+
+    if (twitchUsername) {
+      const existing = await prisma.user.findUnique({ where: { twitchUsername } });
+      if (existing && existing.id !== userId) {
+        throw createError.conflict("This Twitch username is already linked to another account");
+      }
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({ where: { id: userId }, data: { twitchUsername: twitchUsername || null } });
+      await tx.auditLog.create({
+        data: { adminId: req.user!.id, targetId: userId, action: "twitch.edit_username", details: { twitchUsername } },
       });
     });
 

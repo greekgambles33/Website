@@ -20,6 +20,9 @@ model User {
   kickUsername String?  @unique @map("kick_username")
   kickVerified Boolean  @default(false) @map("kick_verified")
 
+  twitchUsername String?  @unique @map("twitch_username")
+  twitchVerified Boolean  @default(false) @map("twitch_verified")
+
   catCoinBalance Int @default(0) @map("cat_coin_balance")
   totalEarned    Int @default(0) @map("total_earned")
   totalSpent     Int @default(0) @map("total_spent")
@@ -39,6 +42,7 @@ model User {
   siteContentEdits       SiteContent[]
 
   @@index([kickUsername], map: "idx_users_kick_username")
+  @@index([twitchUsername], map: "idx_users_twitch_username")
   @@map("users")
 }
 

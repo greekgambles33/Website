@@ -16,6 +16,7 @@ const FILTERS: { label: string; value: UserFilter }[] = [
   { label: "Admins", value: "admins" },
   { label: "Moderators", value: "moderators" },
   { label: "Kick Pending", value: "kick_pending" },
+  { label: "Twitch Pending", value: "twitch_pending" },
 ];
 
 export default function AdminUsersPage() {
@@ -69,7 +70,7 @@ export default function AdminUsersPage() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name, Kick, or Discord ID"
+            placeholder="Search by name, Kick, Twitch, or Discord ID"
             className="w-full rounded-full border border-white/10 bg-ash-900/60 py-2.5 pl-9 pr-4 text-sm text-white placeholder:text-ash-500 focus:border-lava-500/50 focus:outline-none"
           />
         </div>
@@ -110,6 +111,7 @@ export default function AdminUsersPage() {
                   <th className="px-5 py-3 font-semibold">User</th>
                   <th className="px-5 py-3 font-semibold">Balance</th>
                   <th className="px-5 py-3 font-semibold">Kick</th>
+                  <th className="px-5 py-3 font-semibold">Twitch</th>
                   <th className="px-5 py-3 font-semibold">Roles</th>
                   <th className="px-5 py-3 font-semibold">Status</th>
                 </tr>
@@ -138,6 +140,15 @@ export default function AdminUsersPage() {
                       {u.kickUsername ? (
                         <Badge tone={u.kickVerified ? "lava" : "neutral"}>
                           {u.kickVerified ? "Verified" : "Pending"}
+                        </Badge>
+                      ) : (
+                        <span className="text-ash-600">—</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      {u.twitchUsername ? (
+                        <Badge tone={u.twitchVerified ? "lava" : "neutral"}>
+                          {u.twitchVerified ? "Verified" : "Pending"}
                         </Badge>
                       ) : (
                         <span className="text-ash-600">—</span>

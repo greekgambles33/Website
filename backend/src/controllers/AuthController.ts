@@ -10,10 +10,13 @@ import {
 import { env } from "@/config/env";
 import { redis } from "@/lib/redis";
 import { DiscordService } from "@/services/DiscordService";
+import { TwitchService } from "@/services/TwitchService";
 import { AuthService } from "@/services/AuthService";
 import { KickVerificationService } from "@/services/KickVerificationService";
+import { prisma } from "@/lib/prisma";
 
 const STATE_PREFIX = "oauth_state:";
+const TWITCH_STATE_PREFIX = "twitch_oauth_state:";
 
 export const AuthController = {
   initiateDiscordAuth: asyncHandler(async (_req: Request, res: Response) => {
@@ -137,6 +140,57 @@ export const AuthController = {
 
   unlinkKick: asyncHandler(async (req: Request, res: Response) => {
     await KickVerificationService.unlink(req.user!.id);
+    res.json({ success: true });
+  }),
+
+  // --- Twitch OAuth verification ---
+
+  initiateTwitchVerify: asyncHandler(async (req: Request, res: Response) => {
+    const state = randomBytes(32).toString("hex");
+    await redis.set(`${TWITCH_STATE_PREFIX}${state}`, req.user!.id, 600);
+    const authUrl = TwitchService.generateOAuthURL(state);
+    res.json({ success: true, authUrl });
+  }),
+
+  handleTwitchCallback: asyncHandler(async (req: Request, res: Response) => {
+    const { code, state, error: oauthError } = req.query;
+    const frontendUrl = env.FRONTEND_URL;
+
+    const fail = (message: string) => {
+      res.redirect(`${frontendUrl}/profile?twitch=error&message=${encodeURIComponent(message)}`);
+    };
+
+    if (oauthError) return fail(typeof oauthError === "string" ? oauthError : "Twitch authorization was denied");
+    if (!code || typeof code !== "string") return fail("Missing authorization code");
+    if (!state || typeof state !== "string") return fail("Missing state parameter");
+
+    const userId = await redis.get(`${TWITCH_STATE_PREFIX}${state}`);
+    if (!userId) return fail("Invalid or expired state parameter, please try again");
+    await redis.del(`${TWITCH_STATE_PREFIX}${state}`);
+
+    try {
+      const twitchTokens = await TwitchService.exchangeCodeForTokens(code);
+      const twitchUser = await TwitchService.getUserInfo(twitchTokens.access_token);
+
+      const existing = await prisma.user.findUnique({ where: { twitchUsername: twitchUser.login } });
+      if (existing && existing.id !== userId) {
+        return fail("This Twitch account is already linked to another account");
+      }
+
+      await prisma.user.update({
+        where: { id: userId },
+        data: { twitchUsername: twitchUser.login, twitchVerified: true },
+      });
+
+      res.redirect(`${frontendUrl}/profile?twitch=success`);
+    } catch (err) {
+      console.error("[auth] twitch callback failed:", err);
+      fail(err instanceof Error ? err.message : "Twitch verification failed, please try again");
+    }
+  }),
+
+  unlinkTwitch: asyncHandler(async (req: Request, res: Response) => {
+    await prisma.user.update({ where: { id: req.user!.id }, data: { twitchVerified: false } });
     res.json({ success: true });
   }),
 };

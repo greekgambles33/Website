@@ -13,6 +13,8 @@ router.get("/users", AdminController.listUsers);
 router.get("/users/:userId", AdminController.getUser);
 router.put("/users/:userId/verify-kick", AdminController.verifyKickUsername);
 router.put("/users/:userId/kick-username", AdminController.editKickUsername);
+router.put("/users/:userId/verify-twitch", AdminController.verifyTwitchUsername);
+router.put("/users/:userId/twitch-username", AdminController.editTwitchUsername);
 router.put("/users/:userId/coins", AdminController.adjustCoins);
 router.put("/users/:userId/suspend", AdminController.setSuspended);
 router.put("/users/:userId/moderator", AdminController.setModerator);

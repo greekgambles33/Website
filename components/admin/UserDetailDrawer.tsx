@@ -25,6 +25,8 @@ import {
   setUserModerator,
   verifyUserKick,
   editUserKickUsername,
+  verifyUserTwitch,
+  editUserTwitchUsername,
   AdminApiError,
 } from "@/lib/adminApi";
 
@@ -55,6 +57,10 @@ export function UserDetailDrawer({
   const [savingKick, setSavingKick] = useState(false);
   const [kickFeedback, setKickFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+  const [twitchUsernameInput, setTwitchUsernameInput] = useState("");
+  const [savingTwitch, setSavingTwitch] = useState(false);
+  const [twitchFeedback, setTwitchFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
   const [coinAmount, setCoinAmount] = useState("");
   const [coinReason, setCoinReason] = useState("");
   const [savingCoins, setSavingCoins] = useState(false);
@@ -74,6 +80,7 @@ export function UserDetailDrawer({
       const u = await fetchAdminUser(userId);
       setUser(u);
       setKickUsernameInput(u.kickUsername ?? "");
+      setTwitchUsernameInput(u.twitchUsername ?? "");
     } catch (err) {
       setLoadError(err instanceof AdminApiError ? err.message : "Failed to load user");
     } finally {
@@ -116,6 +123,36 @@ export function UserDetailDrawer({
       setKickFeedback({ type: "error", text: err instanceof AdminApiError ? err.message : "Failed to update" });
     } finally {
       setSavingKick(false);
+    }
+  };
+
+  const handleSaveTwitch = async () => {
+    setSavingTwitch(true);
+    setTwitchFeedback(null);
+    try {
+      await editUserTwitchUsername(userId, twitchUsernameInput.trim() || null);
+      setTwitchFeedback({ type: "success", text: "Twitch username updated." });
+      await load();
+      onChanged();
+    } catch (err) {
+      setTwitchFeedback({ type: "error", text: err instanceof AdminApiError ? err.message : "Failed to update" });
+    } finally {
+      setSavingTwitch(false);
+    }
+  };
+
+  const handleToggleTwitchVerified = async () => {
+    if (!user) return;
+    setSavingTwitch(true);
+    setTwitchFeedback(null);
+    try {
+      await verifyUserTwitch(userId, !user.twitchVerified);
+      await load();
+      onChanged();
+    } catch (err) {
+      setTwitchFeedback({ type: "error", text: err instanceof AdminApiError ? err.message : "Failed to update" });
+    } finally {
+      setSavingTwitch(false);
     }
   };
 
@@ -281,6 +318,43 @@ export function UserDetailDrawer({
                 </button>
               )}
               <Feedback message={kickFeedback} />
+            </div>
+
+            {/* Twitch section */}
+            <div className="border-t border-white/5 pt-6">
+              <div className="flex items-center gap-2">
+                <Link2 size={15} className="text-lava-400" />
+                <h3 className="text-sm font-semibold text-white">Twitch Account</h3>
+              </div>
+              <div className="mt-3 flex gap-2">
+                <input
+                  value={twitchUsernameInput}
+                  onChange={(e) => setTwitchUsernameInput(e.target.value)}
+                  placeholder="Twitch username"
+                  className="min-w-0 flex-1 rounded-lg border border-white/10 bg-ash-900/60 px-3 py-2 text-sm text-white placeholder:text-ash-500 focus:border-lava-500/50 focus:outline-none"
+                />
+                <Button size="sm" variant="secondary" disabled={savingTwitch} onClick={handleSaveTwitch}>
+                  Save
+                </Button>
+              </div>
+              {user.twitchUsername && (
+                <button
+                  disabled={savingTwitch}
+                  onClick={handleToggleTwitchVerified}
+                  className="mt-3 flex items-center gap-2 text-xs font-semibold text-ash-300 hover:text-white disabled:opacity-50"
+                >
+                  {user.twitchVerified ? (
+                    <>
+                      <ShieldOff size={14} className="text-ash-400" /> Unverify
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck size={14} className="text-lava-400" /> Mark Verified
+                    </>
+                  )}
+                </button>
+              )}
+              <Feedback message={twitchFeedback} />
             </div>
 
             {/* Coins section */}
