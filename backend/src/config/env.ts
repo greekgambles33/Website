@@ -36,9 +36,12 @@ const envSchema = z.object({
   KICK_CHATROOM_ID: z.string().optional().default(""),
   KICK_BOT_TOKEN: z.string().optional().default(""),
 
-  TWITCH_CLIENT_ID: z.string().min(1, "TWITCH_CLIENT_ID is required"),
-  TWITCH_CLIENT_SECRET: z.string().min(1, "TWITCH_CLIENT_SECRET is required"),
-  TWITCH_REDIRECT_URI: z.string().min(1, "TWITCH_REDIRECT_URI is required"),
+  // Optional — Twitch verification is simply disabled (with a clear error to
+  // the user) until these are set. Must never be required: an unconfigured
+  // Twitch app should not be able to take the whole backend down.
+  TWITCH_CLIENT_ID: z.string().optional().default(""),
+  TWITCH_CLIENT_SECRET: z.string().optional().default(""),
+  TWITCH_REDIRECT_URI: z.string().optional().default(""),
 
   // --- Stream games chat bots (Chat vs Streamer) ---
   TWITCH_CHANNEL_NAME: z.string().optional().default(""),

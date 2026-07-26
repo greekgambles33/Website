@@ -146,6 +146,9 @@ export const AuthController = {
   // --- Twitch OAuth verification ---
 
   initiateTwitchVerify: asyncHandler(async (req: Request, res: Response) => {
+    if (!env.TWITCH_CLIENT_ID || !env.TWITCH_CLIENT_SECRET || !env.TWITCH_REDIRECT_URI) {
+      throw createError.badRequest("Twitch verification isn't configured yet — check back later");
+    }
     const state = randomBytes(32).toString("hex");
     await redis.set(`${TWITCH_STATE_PREFIX}${state}`, req.user!.id, 600);
     const authUrl = TwitchService.generateOAuthURL(state);
