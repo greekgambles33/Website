@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 const links = [
   { label: "Schedule", href: "/schedule" },
   { label: "Games", href: "/games" },
+  { label: "Stream Games", href: "/stream-games" },
   { label: "Store", href: "/store" },
   { label: "Leaderboard", href: "/leaderboard" },
   { label: "Giveaways", href: "/giveaways" },
@@ -30,7 +31,6 @@ export function Navbar() {
   const navLinks = [
     ...links,
     ...(user?.isAdmin || user?.isModerator ? [{ label: "Hunt Tracker", href: "/hunt-tracker" }] : []),
-    ...(user?.isAdmin ? [{ label: "Admin", href: "/admin" }] : []),
   ];
 
   useEffect(() => {

@@ -41,6 +41,11 @@ model User {
   tournamentParticipations TournamentParticipant[] @relation("TournamentParticipants")
   siteContentEdits       SiteContent[]
 
+  createdStreamGames       StreamGame[]       @relation("StreamGameCreator")
+  createdPredictionMatches PredictionMatch[]  @relation("PredictionMatchCreator")
+  predictionVotes          PredictionVote[]
+  createdLadderRuns        LadderRun[]        @relation("LadderRunCreator")
+
   @@index([kickUsername], map: "idx_users_kick_username")
   @@index([twitchUsername], map: "idx_users_twitch_username")
   @@map("users")
@@ -217,4 +222,189 @@ model SiteContent {
   updatedBy User? @relation(fields: [updatedById], references: [id], onDelete: SetNull)
 
   @@map("site_content")
+}
+
+/// Catalog of viewer-facing stream games (e.g. Chat vs Streamer). Admin-managed
+/// list; the actual gameplay for each game lives in its own dedicated tables
+/// (see PredictionMatch below for Chat vs Streamer).
+model StreamGame {
+  id          String  @id @default(uuid())
+  slug        String  @unique
+  name        String
+  description String?
+  imageUrl    String? @map("image_url")
+  isActive    Boolean @default(true) @map("is_active")
+  isVisible   Boolean @default(true) @map("is_visible")
+  sortOrder   Int     @default(0) @map("sort_order")
+
+  /// Off by default — points are cosmetic/in-platform only. When enabled,
+  /// prizeRulesText should hold the streamer's own eligibility/compliance
+  /// disclosure before any run is treated as awarding a real-world prize.
+  prizeModeEnabled Boolean @default(false) @map("prize_mode_enabled")
+  prizeRulesText   String? @map("prize_rules_text")
+
+  createdById String @map("created_by_id")
+  createdBy   User   @relation("StreamGameCreator", fields: [createdById], references: [id])
+
+  predictionMatches PredictionMatch[]
+  ladderRuns        LadderRun[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("stream_games")
+}
+
+enum PredictionChoice {
+  CHAT
+  STREAMER
+}
+
+enum PredictionMatchFormat {
+  SHORT
+  NORMAL
+  EVENT
+}
+
+enum PredictionMatchStatus {
+  ACTIVE
+  COMPLETED
+}
+
+enum PredictionRoundStatus {
+  OPEN
+  LOCKED
+  RESOLVED
+  VOID
+}
+
+enum PredictionVoteSource {
+  TWITCH
+  KICK
+}
+
+/// A single Chat vs Streamer match. Each round, chat votes "!win chat" or
+/// "!win streamer" on whether the streamer's stated call will be correct;
+/// see PredictionService for the full scoring/streak logic.
+model PredictionMatch {
+  id           String                @id @default(uuid())
+  streamGameId String                @map("stream_game_id")
+  format       PredictionMatchFormat @default(NORMAL)
+  targetScore  Int                   @default(15) @map("target_score")
+  status       PredictionMatchStatus @default(ACTIVE)
+
+  chatScore        Int     @default(0) @map("chat_score")
+  streamerScore    Int     @default(0) @map("streamer_score")
+  chatStreak       Int     @default(0) @map("chat_streak")
+  streamerStreak   Int     @default(0) @map("streamer_streak")
+  chatUnderdog     Boolean @default(false) @map("chat_underdog")
+  streamerUnderdog Boolean @default(false) @map("streamer_underdog")
+
+  winner        PredictionChoice?
+  challengeText String?           @map("challenge_text")
+
+  createdById String @map("created_by_id")
+  createdBy   User   @relation("PredictionMatchCreator", fields: [createdById], references: [id])
+  streamGame  StreamGame @relation(fields: [streamGameId], references: [id])
+
+  rounds PredictionRound[]
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  completedAt DateTime? @map("completed_at")
+
+  @@index([streamGameId, status], map: "idx_prediction_matches_game_status")
+  @@map("prediction_matches")
+}
+
+model PredictionRound {
+  id           String                @id @default(uuid())
+  matchId      String                @map("match_id")
+  roundNumber  Int                   @map("round_number")
+  question     String
+  streamerCall String                @map("streamer_call")
+  status       PredictionRoundStatus @default(OPEN)
+
+  votesChat       Int               @default(0) @map("votes_chat")
+  votesStreamer   Int               @default(0) @map("votes_streamer")
+  chatPick        PredictionChoice? @map("chat_pick")
+  streamerCorrect Boolean?          @map("streamer_correct")
+
+  match PredictionMatch  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  votes PredictionVote[]
+
+  openedAt   DateTime? @map("opened_at")
+  lockedAt   DateTime? @map("locked_at")
+  resolvedAt DateTime? @map("resolved_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@unique([matchId, roundNumber])
+  @@map("prediction_rounds")
+}
+
+/// One viewer's vote for a round, sourced from a live Twitch or Kick chat
+/// command. userId is only set when chatUsername matches a verified,
+/// linked site account — unlinked chatters still count toward the round
+/// but don't appear on the personal leaderboard.
+model PredictionVote {
+  id           String               @id @default(uuid())
+  roundId      String               @map("round_id")
+  choice       PredictionChoice
+  source       PredictionVoteSource
+  chatUsername String               @map("chat_username")
+  userId       String?              @map("user_id")
+
+  round PredictionRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  user  User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([roundId, chatUsername])
+  @@index([userId], map: "idx_prediction_votes_user")
+  @@map("prediction_votes")
+}
+
+enum LadderRunStatus {
+  ACTIVE
+  CASHED_OUT
+  FAILED
+  COMPLETED
+}
+
+/// Which sub-state an ACTIVE run is in: ATTEMPTING a challenge at
+/// currentLevel + 1, or in the DECISION window after clearing currentLevel
+/// (cash out vs climb higher).
+enum LadderRunPhase {
+  ATTEMPTING
+  DECISION
+}
+
+/// One climber's run up the six-rung ladder. Level definitions (points,
+/// label, safety net) are fixed and live in LadderService, not the DB —
+/// there's only ever one ladder shape.
+model LadderRun {
+  id              String          @id @default(uuid())
+  streamGameId    String          @map("stream_game_id")
+  participantName String          @map("participant_name")
+  status          LadderRunStatus @default(ACTIVE)
+  phase           LadderRunPhase  @default(ATTEMPTING)
+  currentLevel    Int             @default(0) @map("current_level")
+  securedFloor    Int             @default(0) @map("secured_floor")
+  finalPoints     Int?            @map("final_points")
+
+  chatPassVotes    Int @default(0) @map("chat_pass_votes")
+  chatFailVotes    Int @default(0) @map("chat_fail_votes")
+  chatCashoutVotes Int @default(0) @map("chat_cashout_votes")
+  chatClimbVotes   Int @default(0) @map("chat_climb_votes")
+
+  createdById String @map("created_by_id")
+  createdBy   User   @relation("LadderRunCreator", fields: [createdById], references: [id])
+  streamGame  StreamGame @relation(fields: [streamGameId], references: [id])
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  endedAt   DateTime? @map("ended_at")
+
+  @@index([streamGameId, status], map: "idx_ladder_runs_game_status")
+  @@map("ladder_runs")
 }

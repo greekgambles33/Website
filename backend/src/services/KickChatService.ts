@@ -1,6 +1,8 @@
 import WebSocket from "ws";
+import { PredictionVoteSource } from "@prisma/client";
 import { env } from "@/config/env";
 import { KickVerificationService } from "@/services/KickVerificationService";
+import { routeChatCommand } from "@/services/ChatCommandRouter";
 
 /**
  * Kick has no official public chat API. This connects to the same
@@ -84,17 +86,25 @@ class KickChatServiceImpl {
       return;
     }
 
-    const match = payload.content?.match(VERIFY_COMMAND);
-    if (!match) return;
-
-    const code = match[1].toUpperCase();
     const kickUsername = payload.sender?.username;
-    if (!kickUsername) return;
+    if (!kickUsername || !payload.content) return;
 
-    const verifiedUsername = await KickVerificationService.processVerification(kickUsername, code);
-    if (verifiedUsername) {
-      console.log(`[kick-chat] verified ${verifiedUsername} via code ${code}`);
-      await this.sendChatMessage(`✅ @${verifiedUsername} your Kick account is now verified!`);
+    const verifyMatch = payload.content.match(VERIFY_COMMAND);
+    if (verifyMatch) {
+      const code = verifyMatch[1].toUpperCase();
+      const verifiedUsername = await KickVerificationService.processVerification(kickUsername, code);
+      if (verifiedUsername) {
+        console.log(`[kick-chat] verified ${verifiedUsername} via code ${code}`);
+        await this.sendChatMessage(`✅ @${verifiedUsername} your Kick account is now verified!`);
+      }
+      return;
+    }
+
+    try {
+      const reply = await routeChatCommand(payload.content, kickUsername, PredictionVoteSource.KICK);
+      if (reply) await this.sendChatMessage(reply);
+    } catch (err) {
+      console.error("[kick-chat] prediction command failed:", err);
     }
   }
 

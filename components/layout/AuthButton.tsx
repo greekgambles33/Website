@@ -61,6 +61,14 @@ export function AuthButton({ className, fullWidth = false }: { className?: strin
           <span className="h-1.5 w-1.5 rounded-full bg-lava-400" aria-label="Kick verification pending" />
         )}
       </Link>
+      {user.isAdmin && (
+        <Link
+          href="/admin"
+          className="font-heading rounded-full bg-gradient-to-b from-gold-300 to-gold-500 px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-[#140a04] transition-transform hover:-translate-y-0.5"
+        >
+          Admin
+        </Link>
+      )}
       <button
         onClick={() => logout()}
         aria-label="Logout"

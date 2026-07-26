@@ -56,6 +56,33 @@ export const API_ENDPOINTS = {
   SITE_CONTENT: (key: string) => `${API_URL}/api/site-content/${key}`,
 
   LEADERBOARD: `${API_URL}/api/leaderboard`,
+
+  STREAM_GAMES: `${API_URL}/api/stream-games`,
+  STREAM_GAMES_ALL: `${API_URL}/api/stream-games/all`,
+  STREAM_GAME_BY_SLUG: (slug: string) => `${API_URL}/api/stream-games/slug/${slug}`,
+  STREAM_GAME: (id: string) => `${API_URL}/api/stream-games/${id}`,
+  STREAM_GAMES_REORDER: `${API_URL}/api/stream-games/reorder`,
+
+  PREDICTION_ACTIVE_MATCH: (slug: string) => `${API_URL}/api/predictions/games/${slug}/active`,
+  PREDICTION_MATCHES: (slug: string) => `${API_URL}/api/predictions/games/${slug}/matches`,
+  PREDICTION_MATCH: (matchId: string) => `${API_URL}/api/predictions/matches/${matchId}`,
+  PREDICTION_MATCH_END: (matchId: string) => `${API_URL}/api/predictions/matches/${matchId}/end`,
+  PREDICTION_MATCH_CHALLENGE: (matchId: string) => `${API_URL}/api/predictions/matches/${matchId}/challenge`,
+  PREDICTION_ROUNDS: (matchId: string) => `${API_URL}/api/predictions/matches/${matchId}/rounds`,
+  PREDICTION_ROUND_LOCK: (roundId: string) => `${API_URL}/api/predictions/rounds/${roundId}/lock`,
+  PREDICTION_ROUND_VOID: (roundId: string) => `${API_URL}/api/predictions/rounds/${roundId}/void`,
+  PREDICTION_ROUND_RESOLVE: (roundId: string) => `${API_URL}/api/predictions/rounds/${roundId}/resolve`,
+  PREDICTION_LEADERBOARD: `${API_URL}/api/predictions/leaderboard`,
+  PREDICTION_MY_STATS: `${API_URL}/api/predictions/me/stats`,
+
+  LADDER_LEVELS: `${API_URL}/api/ladder/levels`,
+  LADDER_ACTIVE_RUN: (slug: string) => `${API_URL}/api/ladder/games/${slug}/active`,
+  LADDER_RUNS: (slug: string) => `${API_URL}/api/ladder/games/${slug}/runs`,
+  LADDER_RUN: (runId: string) => `${API_URL}/api/ladder/runs/${runId}`,
+  LADDER_RUN_PASS: (runId: string) => `${API_URL}/api/ladder/runs/${runId}/pass`,
+  LADDER_RUN_FAIL: (runId: string) => `${API_URL}/api/ladder/runs/${runId}/fail`,
+  LADDER_RUN_CASHOUT: (runId: string) => `${API_URL}/api/ladder/runs/${runId}/cashout`,
+  LADDER_RUN_CLIMB: (runId: string) => `${API_URL}/api/ladder/runs/${runId}/climb`,
 } as const;
 
 export interface PublicUser {
@@ -293,4 +320,111 @@ export interface LeaderboardEntry {
   avatarUrl: string | null;
   coins: number;
   tier: string;
+}
+
+// ---------- Stream games: catalog + Chat vs Streamer ----------
+
+export interface StreamGame {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  isActive: boolean;
+  isVisible: boolean;
+  sortOrder: number;
+  prizeModeEnabled: boolean;
+  prizeRulesText: string | null;
+  createdById: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type PredictionChoice = "CHAT" | "STREAMER";
+export type PredictionMatchFormat = "SHORT" | "NORMAL" | "EVENT";
+export type PredictionMatchStatus = "ACTIVE" | "COMPLETED";
+export type PredictionRoundStatus = "OPEN" | "LOCKED" | "RESOLVED" | "VOID";
+
+export interface PredictionRound {
+  id: string;
+  matchId: string;
+  roundNumber: number;
+  question: string;
+  streamerCall: string;
+  status: PredictionRoundStatus;
+  votesChat: number;
+  votesStreamer: number;
+  chatPick: PredictionChoice | null;
+  streamerCorrect: boolean | null;
+  openedAt: string | null;
+  lockedAt: string | null;
+  resolvedAt: string | null;
+  createdAt: string;
+}
+
+export interface PredictionMatch {
+  id: string;
+  streamGameId: string;
+  format: PredictionMatchFormat;
+  targetScore: number;
+  status: PredictionMatchStatus;
+  chatScore: number;
+  streamerScore: number;
+  chatStreak: number;
+  streamerStreak: number;
+  chatUnderdog: boolean;
+  streamerUnderdog: boolean;
+  winner: PredictionChoice | null;
+  challengeText: string | null;
+  createdById: string;
+  createdAt: string;
+  updatedAt: string;
+  completedAt: string | null;
+  rounds: PredictionRound[];
+  streamGame: { id: string; slug: string; name: string };
+}
+
+export interface PredictionLeaderboardEntry {
+  user: { id: string; displayName: string; avatarUrl: string | null };
+  totalPredictions: number;
+  correctPredictions: number;
+  accuracy: number;
+}
+
+export interface PredictionUserStats {
+  totalPredictions: number;
+  correctPredictions: number;
+  accuracy: number;
+  longestStreak: number;
+}
+
+// ---------- Climb the Ladder ----------
+
+export interface LadderLevel {
+  level: number;
+  points: number;
+  label: string;
+  net: number | null;
+}
+
+export type LadderRunStatus = "ACTIVE" | "CASHED_OUT" | "FAILED" | "COMPLETED";
+export type LadderRunPhase = "ATTEMPTING" | "DECISION";
+
+export interface LadderRun {
+  id: string;
+  streamGameId: string;
+  participantName: string;
+  status: LadderRunStatus;
+  phase: LadderRunPhase;
+  currentLevel: number;
+  securedFloor: number;
+  finalPoints: number | null;
+  chatPassVotes: number;
+  chatFailVotes: number;
+  chatCashoutVotes: number;
+  chatClimbVotes: number;
+  createdById: string;
+  createdAt: string;
+  updatedAt: string;
+  endedAt: string | null;
 }

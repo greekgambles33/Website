@@ -6,7 +6,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 
 /** Bare OBS browser-source pages skip the nav/footer/ambient fx entirely. */
-const BARE_ROUTES = ["/bonus-hunt-widget", "/tournament-widget"];
+const BARE_ROUTES = ["/bonus-hunt-widget", "/tournament-widget", "/overlay"];
 
 /** Internal dashboards get their own standalone shell — no public nav/footer. */
 const DASHBOARD_ROUTES = ["/admin", "/hunt-tracker"];
