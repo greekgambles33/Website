@@ -47,7 +47,7 @@ export default function StreamGamesPage() {
             <GlassCard key={game.id} className="flex flex-col">
               <div className="flex items-center gap-2">
                 <Gamepad2 size={18} className="text-lava-400" />
-                {game.isActive && <Badge tone="live" pulse>Live</Badge>}
+                {game.isLive && <Badge tone="live" pulse>Live</Badge>}
               </div>
               <h3 className="mt-4 text-lg font-semibold text-white">{game.name}</h3>
               {game.description && <p className="mt-2 flex-1 text-sm text-ash-300">{game.description}</p>}

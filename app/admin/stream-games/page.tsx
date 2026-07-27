@@ -229,7 +229,12 @@ export default function AdminStreamGamesPage() {
                   />
                   Visible
                 </label>
-                {game.isActive && game.isVisible && <Badge tone="live">Live</Badge>}
+                {game.isActive && game.isVisible && <Badge tone="gold">Published</Badge>}
+                {game.isLive && (
+                  <Badge tone="live" pulse>
+                    Live Now
+                  </Badge>
+                )}
               </div>
 
               <div className="mt-4 border-t border-white/5 pt-4">

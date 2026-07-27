@@ -243,15 +243,6 @@ export interface HeroHighlight {
   value: string;
 }
 
-export interface ScheduleDay {
-  day: string;
-  date: string;
-  time: string;
-  title: string;
-  live: boolean;
-  off?: boolean;
-}
-
 export interface CommunityStat {
   label: string;
   value: number;
@@ -332,6 +323,11 @@ export interface StreamGame {
   imageUrl: string | null;
   isActive: boolean;
   isVisible: boolean;
+  /** Real, moment-to-moment "is a match/run/hunt/tournament actually
+   * happening right now" — only present on the catalog list endpoints, not
+   * getBySlug. Distinct from isActive, which just means "shown in the
+   * catalog at all". */
+  isLive?: boolean;
   sortOrder: number;
   prizeModeEnabled: boolean;
   prizeRulesText: string | null;
