@@ -10,6 +10,7 @@ import { apiLimiter } from "@/middleware/rateLimit";
 import { notFoundHandler, errorHandler } from "@/middleware/errorHandler";
 import { KickChatService } from "@/services/KickChatService";
 import { TwitchChatService } from "@/services/TwitchChatService";
+import { seedDefaults } from "@/bootstrap/seedDefaults";
 import authRoutes from "@/routes/auth";
 import adminRoutes from "@/routes/admin";
 import huntRoutes from "@/routes/hunts";
@@ -56,3 +57,4 @@ app.listen(env.PORT, () => {
 
 KickChatService.start();
 TwitchChatService.start();
+seedDefaults();
