@@ -10,6 +10,13 @@ import { ButtonLink } from "@/components/ui/Button";
 import { fetchStreamGames } from "@/lib/streamGamesApi";
 import type { StreamGame } from "@/lib/api";
 
+// Games with their own pre-existing standalone page (Bonus Hunt, Tournament)
+// link straight there instead of the generic /stream-games/[slug] route.
+const EXTERNAL_LINKS: Record<string, string> = {
+  "bonus-hunt": "/bonus-hunt",
+  tournament: "/tournament",
+};
+
 export default function StreamGamesPage() {
   const [games, setGames] = useState<StreamGame[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +32,7 @@ export default function StreamGamesPage() {
       <SectionHeading
         eyebrow="Free to Play"
         title="Stream Games"
-        description="Vote through Twitch or Kick chat, climb the leaderboard, no money on the line — ever."
+        description="Live community games running alongside the stream — bonus hunts, tournaments, chat predictions, and more. Free to play, every time."
       />
 
       {loading ? (
@@ -45,7 +52,7 @@ export default function StreamGamesPage() {
               <h3 className="mt-4 text-lg font-semibold text-white">{game.name}</h3>
               {game.description && <p className="mt-2 flex-1 text-sm text-ash-300">{game.description}</p>}
               <div className="mt-5">
-                <ButtonLink href={`/stream-games/${game.slug}`} size="sm" variant="secondary">
+                <ButtonLink href={EXTERNAL_LINKS[game.slug] ?? `/stream-games/${game.slug}`} size="sm" variant="secondary">
                   View {game.name}
                 </ButtonLink>
               </div>

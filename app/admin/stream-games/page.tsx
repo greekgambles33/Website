@@ -15,8 +15,19 @@ import {
 } from "@/lib/streamGamesApi";
 import type { StreamGame } from "@/lib/api";
 
-// Stream games with a dedicated live control panel.
+// Stream games with a dedicated live control panel under /admin/stream-games/[slug].
 const GAMES_WITH_CONTROL_PANEL = new Set(["chat-vs-streamer", "climb-the-ladder"]);
+
+// Games with their own pre-existing standalone pages link straight there
+// instead of the generic /stream-games/[slug] and control-panel routes.
+const EXTERNAL_PUBLIC_LINKS: Record<string, string> = {
+  "bonus-hunt": "/bonus-hunt",
+  tournament: "/tournament",
+};
+const EXTERNAL_ADMIN_LINKS: Record<string, string> = {
+  "bonus-hunt": "/hunt-tracker",
+  tournament: "/admin/tournament",
+};
 
 function slugify(input: string): string {
   return input
@@ -245,18 +256,27 @@ export default function AdminStreamGamesPage() {
 
               <div className="mt-4 flex items-center gap-3 border-t border-white/5 pt-4">
                 <Link
-                  href={`/stream-games/${game.slug}`}
+                  href={EXTERNAL_PUBLIC_LINKS[game.slug] ?? `/stream-games/${game.slug}`}
                   className="text-xs font-semibold text-ash-300 hover:text-white"
                 >
                   View public page
                 </Link>
-                {GAMES_WITH_CONTROL_PANEL.has(game.slug) && (
+                {GAMES_WITH_CONTROL_PANEL.has(game.slug) ? (
                   <Link
                     href={`/admin/stream-games/${game.slug}`}
                     className="flex items-center gap-1 text-xs font-semibold text-lava-300 hover:text-lava-200"
                   >
                     Manage rounds <ArrowRight size={12} />
                   </Link>
+                ) : (
+                  EXTERNAL_ADMIN_LINKS[game.slug] && (
+                    <Link
+                      href={EXTERNAL_ADMIN_LINKS[game.slug]}
+                      className="flex items-center gap-1 text-xs font-semibold text-lava-300 hover:text-lava-200"
+                    >
+                      Manage <ArrowRight size={12} />
+                    </Link>
+                  )
                 )}
               </div>
             </GlassCard>

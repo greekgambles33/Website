@@ -11,7 +11,8 @@
     "lint": "eslint src",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "seed:stream-games": "tsx scripts/seed-stream-games.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.2.1",
