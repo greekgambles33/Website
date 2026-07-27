@@ -11,7 +11,6 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { cn } from "@/lib/utils";
 
 const links = [
-  { label: "Games", href: "/games" },
   { label: "Stream Games", href: "/stream-games" },
   { label: "Store", href: "/store" },
   { label: "Leaderboard", href: "/leaderboard" },
