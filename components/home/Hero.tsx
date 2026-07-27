@@ -130,7 +130,7 @@ export function Hero() {
 
         <div className="absolute inset-x-0 bottom-0 p-5">
           <div className="font-display text-2xl uppercase tracking-wide text-white">
-            {streamStatus.isLive ? streamStatus.title : "Offline — check the schedule"}
+            {streamStatus.isLive ? streamStatus.title : "Offline — follow on Kick or Twitch for the next stream"}
           </div>
           {streamStatus.isLive && (
             <div className="font-heading mt-1 text-xs font-semibold tracking-wide text-lava-300">

@@ -3,15 +3,6 @@ import { z } from "zod";
 import { asyncHandler, createError } from "@/middleware/errorHandler";
 import { SiteContentService, SITE_CONTENT_KEYS, type SiteContentKey } from "@/services/SiteContentService";
 
-const scheduleDaySchema = z.object({
-  day: z.string().min(1),
-  date: z.string().min(1),
-  time: z.string().min(1),
-  title: z.string().min(1),
-  live: z.boolean(),
-  off: z.boolean().optional(),
-});
-
 const schemasByKey: Record<SiteContentKey, z.ZodType> = {
   stream_status: z.object({
     isLive: z.boolean(),
@@ -21,8 +12,6 @@ const schemasByKey: Record<SiteContentKey, z.ZodType> = {
     uptimeMinutes: z.number().int().nonnegative(),
   }),
   hero_highlights: z.array(z.object({ label: z.string().min(1).max(60), value: z.string().min(1).max(30) })).max(6),
-  schedule: z.array(scheduleDaySchema).length(7),
-  next_stream_at: z.object({ date: z.string().min(1) }),
   community_stats: z.array(z.object({ label: z.string().min(1).max(60), value: z.number().nonnegative() })).max(8),
   announcements: z
     .array(

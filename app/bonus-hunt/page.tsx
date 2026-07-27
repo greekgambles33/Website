@@ -72,8 +72,7 @@ export default function BonusHuntPage() {
           <Flame size={28} className="text-lava-400/60" />
           <h2 className="text-lg font-semibold text-white">No Active Hunt</h2>
           <p className="text-sm text-ash-300">
-            Nothing&apos;s being tracked live right now — check the schedule for the next stream and this page
-            will light up the moment a hunt goes live.
+            Nothing&apos;s being tracked live right now — this page will light up the moment a hunt goes live.
           </p>
           <Link
             href="/games"

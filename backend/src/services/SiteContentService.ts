@@ -5,8 +5,6 @@ import { createError } from "@/middleware/errorHandler";
 export const SITE_CONTENT_KEYS = [
   "stream_status",
   "hero_highlights",
-  "schedule",
-  "next_stream_at",
   "community_stats",
   "announcements",
   "store",

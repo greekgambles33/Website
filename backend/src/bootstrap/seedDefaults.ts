@@ -8,16 +8,6 @@ const DEFAULT_SITE_CONTENT: Record<string, unknown> = {
     { label: "Coins Given Out", value: "0" },
     { label: "Nights Streamed", value: "0" },
   ],
-  schedule: [
-    { day: "Monday", date: "Sample date", time: "8:00 PM EST", title: "Sample Stream", live: false },
-    { day: "Tuesday", date: "Sample date", time: "8:00 PM EST", title: "Sample Stream", live: false },
-    { day: "Wednesday", date: "Sample date", time: "—", title: "Day Off", live: false, off: true },
-    { day: "Thursday", date: "Sample date", time: "8:00 PM EST", title: "Sample Stream", live: false },
-    { day: "Friday", date: "Sample date", time: "8:00 PM EST", title: "Sample Stream", live: false },
-    { day: "Saturday", date: "Sample date", time: "6:00 PM EST", title: "Sample Stream", live: false },
-    { day: "Sunday", date: "Sample date", time: "—", title: "Day Off", live: false, off: true },
-  ],
-  next_stream_at: { date: "2026-07-28T20:00:00-05:00" },
   community_stats: [
     { label: "Members", value: 0 },
     { label: "Coins Distributed", value: 0 },
