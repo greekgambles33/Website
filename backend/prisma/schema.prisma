@@ -46,6 +46,13 @@ model User {
   predictionVotes          PredictionVote[]
   createdLadderRuns        LadderRun[]        @relation("LadderRunCreator")
 
+  huntGuesses    HuntGuess[] @relation("HuntGuesses")
+  wonHuntGuesses Hunt[]      @relation("HuntGuessWinner")
+
+  createdGiveaways Giveaway[]      @relation("GiveawayCreator")
+  wonGiveaways     Giveaway[]      @relation("GiveawayWinner")
+  giveawayEntries  GiveawayEntry[] @relation("GiveawayEntries")
+
   @@index([kickUsername], map: "idx_users_kick_username")
   @@index([twitchUsername], map: "idx_users_twitch_username")
   @@map("users")
@@ -98,6 +105,13 @@ model Hunt {
   status        HuntStatus @default(COLLECTING)
   isLive        Boolean    @default(false) @map("is_live")
 
+  /// "Guess the Balance" — viewers guess where the hunt will end up;
+  /// closest guess wins once the admin enters the real final balance.
+  finalBalance  Decimal? @map("final_balance") @db.Decimal(12, 2)
+  guessWinnerId String?  @map("guess_winner_id")
+  guessWinner   User?    @relation("HuntGuessWinner", fields: [guessWinnerId], references: [id], onDelete: SetNull)
+  guesses       HuntGuess[]
+
   createdById String @map("created_by_id")
   createdBy   User   @relation(fields: [createdById], references: [id])
 
@@ -108,6 +122,21 @@ model Hunt {
 
   @@index([isLive], map: "idx_hunts_is_live")
   @@map("hunts")
+}
+
+model HuntGuess {
+  id        String   @id @default(uuid())
+  huntId    String   @map("hunt_id")
+  userId    String   @map("user_id")
+  guess     Decimal  @db.Decimal(12, 2)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  hunt Hunt @relation(fields: [huntId], references: [id], onDelete: Cascade)
+  user User @relation("HuntGuesses", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([huntId, userId])
+  @@map("hunt_guesses")
 }
 
 enum TournamentStatus {
@@ -407,4 +436,49 @@ model LadderRun {
 
   @@index([streamGameId, status], map: "idx_ladder_runs_game_status")
   @@map("ladder_runs")
+}
+
+enum GiveawayStatus {
+  DRAFT
+  OPEN
+  CLOSED
+  COMPLETED
+}
+
+/// A real raffle: viewers enter (optionally spending coins), the admin
+/// closes entries and draws a winner from whoever actually entered.
+model Giveaway {
+  id          String         @id @default(uuid())
+  title       String
+  description String?
+  entryCost   Int            @default(0) @map("entry_cost")
+  status      GiveawayStatus @default(DRAFT)
+  endsAt      DateTime?      @map("ends_at")
+
+  winnerId String? @map("winner_id")
+  winner   User?   @relation("GiveawayWinner", fields: [winnerId], references: [id], onDelete: SetNull)
+
+  createdById String @map("created_by_id")
+  createdBy   User   @relation("GiveawayCreator", fields: [createdById], references: [id])
+
+  entries GiveawayEntry[]
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  drawnAt   DateTime? @map("drawn_at")
+
+  @@map("giveaways")
+}
+
+model GiveawayEntry {
+  id         String   @id @default(uuid())
+  giveawayId String   @map("giveaway_id")
+  userId     String   @map("user_id")
+  enteredAt  DateTime @default(now()) @map("entered_at")
+
+  giveaway Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
+  user     User     @relation("GiveawayEntries", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([giveawayId, userId])
+  @@map("giveaway_entries")
 }

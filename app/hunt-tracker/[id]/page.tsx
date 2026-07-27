@@ -176,7 +176,15 @@ export default function HuntBuilderPage() {
             <button
               disabled={busy}
               onClick={() => {
-                if (confirm("End this hunt? This cannot be undone.")) runAction(() => completeHunt(hunt.id));
+                if (!confirm("End this hunt? This cannot be undone.")) return;
+                const raw = prompt("Final balance (leave blank to skip settling Guess the Balance):");
+                if (raw === null) return;
+                const finalBalance = raw.trim() === "" ? undefined : Number(raw);
+                if (finalBalance !== undefined && (!Number.isFinite(finalBalance) || finalBalance < 0)) {
+                  alert("Final balance must be a non-negative number");
+                  return;
+                }
+                runAction(() => completeHunt(hunt.id, finalBalance));
               }}
               className="font-heading flex items-center gap-1.5 rounded-[10px] border border-gold-400/40 px-4 py-2 text-xs font-bold uppercase tracking-wide text-gold-400 disabled:opacity-50"
             >

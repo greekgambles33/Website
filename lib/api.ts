@@ -37,6 +37,9 @@ export const API_ENDPOINTS = {
   HUNT_START: (id: string) => `${API_URL}/api/hunts/${id}/start`,
   HUNT_COMPLETE: (id: string) => `${API_URL}/api/hunts/${id}/complete`,
   HUNT_LIVE_TOGGLE: (id: string) => `${API_URL}/api/hunts/${id}/live`,
+  HUNT_GUESS_SUMMARY: (id: string) => `${API_URL}/api/hunts/${id}/guess-summary`,
+  HUNT_MY_GUESS: (id: string) => `${API_URL}/api/hunts/${id}/my-guess`,
+  HUNT_GUESS: (id: string) => `${API_URL}/api/hunts/${id}/guess`,
 
   TOURNAMENTS: `${API_URL}/api/tournaments`,
   TOURNAMENT: (id: string) => `${API_URL}/api/tournaments/${id}`,
@@ -56,6 +59,15 @@ export const API_ENDPOINTS = {
   SITE_CONTENT: (key: string) => `${API_URL}/api/site-content/${key}`,
 
   LEADERBOARD: `${API_URL}/api/leaderboard`,
+
+  GIVEAWAYS: `${API_URL}/api/giveaways`,
+  GIVEAWAY: (id: string) => `${API_URL}/api/giveaways/${id}`,
+  GIVEAWAY_MY_ENTRY: (id: string) => `${API_URL}/api/giveaways/${id}/my-entry`,
+  GIVEAWAY_ENTER: (id: string) => `${API_URL}/api/giveaways/${id}/enter`,
+  GIVEAWAY_OPEN: (id: string) => `${API_URL}/api/giveaways/${id}/open`,
+  GIVEAWAY_CLOSE: (id: string) => `${API_URL}/api/giveaways/${id}/close`,
+  GIVEAWAY_ENTRIES: (id: string) => `${API_URL}/api/giveaways/${id}/entries`,
+  GIVEAWAY_DRAW: (id: string) => `${API_URL}/api/giveaways/${id}/draw`,
 
   STREAM_GAMES: `${API_URL}/api/stream-games`,
   STREAM_GAMES_ALL: `${API_URL}/api/stream-games/all`,
@@ -159,11 +171,54 @@ export interface Hunt {
   bonuses: HuntBonus[];
   status: HuntStatus;
   isLive: boolean;
+  finalBalance: number | null;
+  guessWinnerId: string | null;
   createdById: string;
   createdAt: string;
   updatedAt: string;
   startedAt: string | null;
   completedAt: string | null;
+}
+
+export interface HuntGuessWinner {
+  displayName: string;
+  avatarUrl: string | null;
+  guess: number;
+}
+
+// ---------- Giveaways (real raffle entries) ----------
+
+export type GiveawayStatus = "DRAFT" | "OPEN" | "CLOSED" | "COMPLETED";
+
+export interface GiveawayUserRef {
+  id: string;
+  displayName: string;
+  avatarUrl: string | null;
+}
+
+export interface Giveaway {
+  id: string;
+  title: string;
+  description: string | null;
+  entryCost: number;
+  status: GiveawayStatus;
+  endsAt: string | null;
+  winnerId: string | null;
+  winner: GiveawayUserRef | null;
+  createdById: string;
+  createdBy: GiveawayUserRef;
+  _count: { entries: number };
+  createdAt: string;
+  updatedAt: string;
+  drawnAt: string | null;
+}
+
+export interface GiveawayEntry {
+  id: string;
+  giveawayId: string;
+  userId: string;
+  enteredAt: string;
+  user: GiveawayUserRef;
 }
 
 export type TournamentStatus = "DRAFT" | "REGISTRATION" | "SLOT_SELECTION" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
@@ -262,30 +317,6 @@ export interface StoreItemContent {
   price: number;
   category: string;
   limited: boolean;
-}
-
-export interface GiveawayContent {
-  title: string;
-  entriesOpen: boolean;
-  entryCost: number;
-  freeEntryAvailable: boolean;
-  endsAt: string;
-  totalEntries: number;
-}
-
-export interface UpcomingGiveawayContent {
-  id: string;
-  title: string;
-  startsAt: string;
-  entryCost: number;
-  freeEntryAvailable: boolean;
-}
-
-export interface LatestWinnerContent {
-  id: string;
-  username: string;
-  prize: string;
-  date: string;
 }
 
 export interface CommunityHighlightContent {

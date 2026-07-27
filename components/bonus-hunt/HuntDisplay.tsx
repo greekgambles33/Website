@@ -1,11 +1,112 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Crown, Flame } from "lucide-react";
+import { Crown, Flame, Target, Trophy } from "lucide-react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Badge } from "@/components/ui/Badge";
-import type { Hunt } from "@/lib/api";
+import { Button } from "@/components/ui/Button";
+import { useAuth } from "@/components/providers/AuthProvider";
+import type { Hunt, HuntGuessWinner } from "@/lib/api";
+import { fetchGuessSummary, fetchMyGuess, submitGuess, HuntApiError } from "@/lib/huntsApi";
 import { calcHuntStats, bonusMultiplier } from "@/lib/huntStats";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+
+function GuessTheBalance({ hunt }: { hunt: Hunt }) {
+  const { user } = useAuth();
+  const [count, setCount] = useState(0);
+  const [winner, setWinner] = useState<HuntGuessWinner | null>(null);
+  const [myGuess, setMyGuess] = useState<number | null>(null);
+  const [input, setInput] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchGuessSummary(hunt.id).then((s) => {
+      setCount(s.count);
+      setWinner(s.winner);
+    });
+  }, [hunt.id, hunt.status]);
+
+  useEffect(() => {
+    if (user && hunt.status !== "COMPLETED") {
+      fetchMyGuess(hunt.id).then((g) => {
+        setMyGuess(g);
+        if (g !== null) setInput(String(g));
+      });
+    }
+  }, [user, hunt.id, hunt.status]);
+
+  const handleSubmit = async () => {
+    const value = Number(input);
+    if (!Number.isFinite(value) || value < 0) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await submitGuess(hunt.id, value);
+      setMyGuess(value);
+      setCount((c) => (myGuess === null ? c + 1 : c));
+    } catch (err) {
+      setError(err instanceof HuntApiError ? err.message : "Failed to submit guess");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <GlassCard className="mx-auto mt-8 max-w-3xl">
+      <div className="flex items-center gap-2">
+        <Target size={16} className="text-lava-400" />
+        <h3 className="font-heading text-sm font-semibold uppercase tracking-widest text-ash-100">
+          Guess the Balance
+        </h3>
+      </div>
+
+      {hunt.status === "COMPLETED" ? (
+        <div className="mt-3 text-center">
+          <p className="text-sm text-ash-300">
+            Final balance: <span className="font-semibold text-white">{formatCurrency(hunt.finalBalance ?? 0, hunt.currency)}</span>
+          </p>
+          {winner ? (
+            <p className="mt-2 flex items-center justify-center gap-1.5 text-sm text-gold-300">
+              <Trophy size={15} /> {winner.displayName} won with a guess of {formatCurrency(winner.guess, hunt.currency)}
+            </p>
+          ) : (
+            <p className="mt-2 text-xs text-ash-500">No guesses were submitted for this hunt.</p>
+          )}
+        </div>
+      ) : (
+        <div className="mt-3">
+          <p className="text-xs text-ash-400">
+            Closest guess to the final balance wins bragging rights. {count} guess{count === 1 ? "" : "es"} so far.
+          </p>
+          {user ? (
+            <div className="mt-3 flex gap-2">
+              <input
+                type="number"
+                min={0}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={`Your guess, in ${hunt.currency}`}
+                className="ggb-input"
+              />
+              <Button size="sm" disabled={busy || !input} onClick={handleSubmit}>
+                {myGuess !== null ? "Update" : "Submit"}
+              </Button>
+            </div>
+          ) : (
+            <p className="mt-3 text-xs text-ash-400">Log in to submit a guess.</p>
+          )}
+          {myGuess !== null && !error && (
+            <p className="mt-2 text-xs text-lava-300">Your current guess: {formatCurrency(myGuess, hunt.currency)}</p>
+          )}
+          {error && <p className="mt-2 text-xs text-crimson-400">{error}</p>}
+        </div>
+      )}
+    </GlassCard>
+  );
+}
 
 const statusTone = {
   COLLECTING: "neutral",
@@ -98,6 +199,8 @@ export function HuntDisplay({ hunt }: { hunt: Hunt }) {
           </span>
         </div>
       </GlassCard>
+
+      <GuessTheBalance hunt={hunt} />
 
       <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {hunt.bonuses.map((bonus) => {

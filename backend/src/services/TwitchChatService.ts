@@ -2,6 +2,7 @@ import WebSocket from "ws";
 import { PredictionVoteSource } from "@prisma/client";
 import { env } from "@/config/env";
 import { routeChatCommand } from "@/services/ChatCommandRouter";
+import { awardChatActivityPoint } from "@/services/ChatActivityService";
 
 const IRC_WS_URL = "wss://irc-ws.chat.twitch.tv:443";
 
@@ -77,6 +78,10 @@ class TwitchChatServiceImpl {
   }
 
   private async handleMessage(twitchUsername: string, content: string) {
+    awardChatActivityPoint(twitchUsername, PredictionVoteSource.TWITCH).catch((err) =>
+      console.error("[twitch-chat] chat activity point failed:", err)
+    );
+
     const reply = await routeChatCommand(content, twitchUsername, PredictionVoteSource.TWITCH);
     if (reply) this.sendChatMessage(reply);
   }

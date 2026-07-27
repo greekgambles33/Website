@@ -1,6 +1,6 @@
 "use client";
 
-import { API_ENDPOINTS, type Hunt } from "@/lib/api";
+import { API_ENDPOINTS, type Hunt, type HuntGuessWinner } from "@/lib/api";
 import { getAccessToken } from "@/lib/authPersistence";
 
 export class HuntApiError extends Error {}
@@ -114,9 +114,27 @@ export async function startHunt(id: string): Promise<Hunt> {
   return data.hunt;
 }
 
-export async function completeHunt(id: string): Promise<Hunt> {
-  const data = await huntFetch<{ hunt: Hunt }>(API_ENDPOINTS.HUNT_COMPLETE(id), { method: "POST" });
+export async function completeHunt(id: string, finalBalance?: number): Promise<Hunt> {
+  const data = await huntFetch<{ hunt: Hunt }>(API_ENDPOINTS.HUNT_COMPLETE(id), {
+    method: "POST",
+    body: JSON.stringify({ finalBalance }),
+  });
   return data.hunt;
+}
+
+// ---------- Guess the Balance ----------
+
+export async function fetchGuessSummary(id: string): Promise<{ count: number; winner: HuntGuessWinner | null }> {
+  return huntFetch(API_ENDPOINTS.HUNT_GUESS_SUMMARY(id), { cache: "no-store" });
+}
+
+export async function fetchMyGuess(id: string): Promise<number | null> {
+  const data = await huntFetch<{ guess: number | null }>(API_ENDPOINTS.HUNT_MY_GUESS(id));
+  return data.guess;
+}
+
+export async function submitGuess(id: string, guess: number): Promise<void> {
+  await huntFetch(API_ENDPOINTS.HUNT_GUESS(id), { method: "POST", body: JSON.stringify({ guess }) });
 }
 
 export async function goLive(id: string): Promise<Hunt> {

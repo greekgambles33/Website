@@ -35,35 +35,6 @@ const schemasByKey: Record<SiteContentKey, z.ZodType> = {
       })
     )
     .max(100),
-  giveaway: z.object({
-    title: z.string().min(1).max(200),
-    entriesOpen: z.boolean(),
-    entryCost: z.number().int().nonnegative(),
-    freeEntryAvailable: z.boolean(),
-    endsAt: z.string().min(1),
-    totalEntries: z.number().int().nonnegative(),
-  }),
-  upcoming_giveaways: z
-    .array(
-      z.object({
-        id: z.string().min(1),
-        title: z.string().min(1).max(200),
-        startsAt: z.string().min(1),
-        entryCost: z.number().int().nonnegative(),
-        freeEntryAvailable: z.boolean(),
-      })
-    )
-    .max(20),
-  latest_winners: z
-    .array(
-      z.object({
-        id: z.string().min(1),
-        username: z.string().min(1).max(80),
-        prize: z.string().min(1).max(120),
-        date: z.string().min(1),
-      })
-    )
-    .max(50),
   community_highlights: z
     .array(z.object({ id: z.string().min(1), username: z.string().min(1).max(80), quote: z.string().min(1).max(400) }))
     .max(20),
@@ -107,6 +78,9 @@ export const SiteContentController = {
   upsert: asyncHandler(async (req: Request, res: Response) => {
     const { key } = req.params;
     if (!isKnownKey(key)) throw createError.notFound("Unknown content key");
+    if (key === "stream_status") {
+      throw createError.badRequest("Stream status is now updated automatically from Kick — no manual edits needed");
+    }
 
     const schema = schemasByKey[key];
     const result = schema.safeParse(req.body?.data);

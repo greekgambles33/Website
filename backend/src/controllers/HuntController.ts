@@ -35,6 +35,14 @@ const reorderSchema = z.object({
   orderedBonusIds: z.array(z.string()).min(1),
 });
 
+const completeSchema = z.object({
+  finalBalance: z.number().nonnegative().optional(),
+});
+
+const guessSchema = z.object({
+  guess: z.number().nonnegative(),
+});
+
 export const HuntController = {
   list: asyncHandler(async (_req: Request, res: Response) => {
     const hunts = await HuntService.list();
@@ -107,8 +115,28 @@ export const HuntController = {
   }),
 
   complete: asyncHandler(async (req: Request, res: Response) => {
-    const hunt = await HuntService.complete(req.params.id);
+    const { finalBalance } = parseBody(completeSchema, req.body);
+    const hunt = await HuntService.complete(req.params.id, finalBalance);
     res.json({ success: true, hunt: serializeHunt(hunt) });
+  }),
+
+  submitGuess: asyncHandler(async (req: Request, res: Response) => {
+    const { guess } = parseBody(guessSchema, req.body);
+    await HuntService.submitGuess(req.params.id, req.user!.id, guess);
+    res.json({ success: true });
+  }),
+
+  getMyGuess: asyncHandler(async (req: Request, res: Response) => {
+    const guess = await HuntService.getMyGuess(req.params.id, req.user!.id);
+    res.json({ success: true, guess });
+  }),
+
+  getGuessSummary: asyncHandler(async (req: Request, res: Response) => {
+    const [count, winner] = await Promise.all([
+      HuntService.getGuessCount(req.params.id),
+      HuntService.getGuessWinner(req.params.id),
+    ]);
+    res.json({ success: true, count, winner });
   }),
 
   setLive: asyncHandler(async (req: Request, res: Response) => {

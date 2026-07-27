@@ -3,6 +3,7 @@ import { PredictionVoteSource } from "@prisma/client";
 import { env } from "@/config/env";
 import { KickVerificationService } from "@/services/KickVerificationService";
 import { routeChatCommand } from "@/services/ChatCommandRouter";
+import { awardChatActivityPoint } from "@/services/ChatActivityService";
 
 /**
  * Kick has no official public chat API. This connects to the same
@@ -88,6 +89,10 @@ class KickChatServiceImpl {
 
     const kickUsername = payload.sender?.username;
     if (!kickUsername || !payload.content) return;
+
+    awardChatActivityPoint(kickUsername, PredictionVoteSource.KICK).catch((err) =>
+      console.error("[kick-chat] chat activity point failed:", err)
+    );
 
     const verifyMatch = payload.content.match(VERIFY_COMMAND);
     if (verifyMatch) {

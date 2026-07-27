@@ -28,19 +28,6 @@ export type Section = ListSection | ObjectSection;
 
 export const SECTIONS: Section[] = [
   {
-    key: "stream_status",
-    label: "Stream Status",
-    description: "Shown live in the homepage hero.",
-    kind: "object",
-    fields: [
-      { key: "isLive", label: "Currently Live", type: "boolean" },
-      { key: "title", label: "Stream Title", type: "text" },
-      { key: "category", label: "Category", type: "text" },
-      { key: "viewers", label: "Viewers", type: "number" },
-      { key: "uptimeMinutes", label: "Uptime (minutes)", type: "number" },
-    ],
-  },
-  {
     key: "hero_highlights",
     label: "Hero Stats",
     description: "The three stat pairs shown under the hero CTAs (e.g. Followers, Nights Streamed).",
@@ -101,45 +88,6 @@ export const SECTIONS: Section[] = [
       { key: "price", label: "Price (HellCatCoins)", type: "number" },
       { key: "category", label: "Category", type: "text" },
       { key: "limited", label: "Limited", type: "boolean" },
-    ],
-  },
-  {
-    key: "giveaway",
-    label: "Active Giveaway",
-    description: "The current giveaway shown on the homepage and /giveaways.",
-    kind: "object",
-    fields: [
-      { key: "title", label: "Title", type: "text" },
-      { key: "entriesOpen", label: "Entries Open", type: "boolean" },
-      { key: "entryCost", label: "Entry Cost (HellCatCoins)", type: "number" },
-      { key: "freeEntryAvailable", label: "Free Entry Available", type: "boolean" },
-      { key: "endsAt", label: "Ends At", type: "datetime" },
-      { key: "totalEntries", label: "Total Entries", type: "number" },
-    ],
-  },
-  {
-    key: "upcoming_giveaways",
-    label: "Upcoming Giveaways",
-    description: "Shown on /giveaways under \"Coming Up\".",
-    kind: "list",
-    hasId: true,
-    fields: [
-      { key: "title", label: "Title", type: "text" },
-      { key: "startsAt", label: "Starts At", type: "datetime" },
-      { key: "entryCost", label: "Entry Cost", type: "number" },
-      { key: "freeEntryAvailable", label: "Free Entry Available", type: "boolean" },
-    ],
-  },
-  {
-    key: "latest_winners",
-    label: "Winners",
-    description: "Shown on the homepage \"Latest Winners\" and reused as /giveaways past-winners history.",
-    kind: "list",
-    hasId: true,
-    fields: [
-      { key: "username", label: "Username", type: "text" },
-      { key: "prize", label: "Prize", type: "text" },
-      { key: "date", label: "Date label", type: "text" },
     ],
   },
   {

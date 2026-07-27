@@ -14,9 +14,10 @@ export interface HuntBonus {
   addedAt: string;
 }
 
-export interface SerializedHunt extends Omit<Hunt, "startBalance" | "bonuses"> {
+export interface SerializedHunt extends Omit<Hunt, "startBalance" | "bonuses" | "finalBalance"> {
   startBalance: number;
   bonuses: HuntBonus[];
+  finalBalance: number | null;
 }
 
 function slugify(name: string): string {
@@ -37,6 +38,7 @@ export function serializeHunt(hunt: Hunt): SerializedHunt {
     ...hunt,
     startBalance: Number(hunt.startBalance),
     bonuses: getBonuses(hunt),
+    finalBalance: hunt.finalBalance !== null ? Number(hunt.finalBalance) : null,
   };
 }
 
@@ -216,14 +218,71 @@ export class HuntService {
     });
   }
 
-  static async complete(id: string): Promise<Hunt> {
+  /** finalBalance, if given, also settles "Guess the Balance": whoever's
+   * guess is closest wins. Ties go to whoever guessed first. */
+  static async complete(id: string, finalBalance?: number): Promise<Hunt> {
     const hunt = await this.get(id);
     if (hunt.status === HuntStatus.COMPLETED) throw createError.badRequest("Hunt is already completed");
+    if (finalBalance !== undefined && (!Number.isFinite(finalBalance) || finalBalance < 0)) {
+      throw createError.badRequest("finalBalance must be a non-negative number");
+    }
+
+    let guessWinnerId: string | null = null;
+    if (finalBalance !== undefined) {
+      const guesses = await prisma.huntGuess.findMany({ where: { huntId: id }, orderBy: { createdAt: "asc" } });
+      let best: (typeof guesses)[number] | null = null;
+      let bestDiff = Infinity;
+      for (const g of guesses) {
+        const diff = Math.abs(Number(g.guess) - finalBalance);
+        if (diff < bestDiff) {
+          bestDiff = diff;
+          best = g;
+        }
+      }
+      guessWinnerId = best?.userId ?? null;
+    }
 
     return prisma.hunt.update({
       where: { id },
-      data: { status: HuntStatus.COMPLETED, completedAt: new Date(), isLive: false },
+      data: {
+        status: HuntStatus.COMPLETED,
+        completedAt: new Date(),
+        isLive: false,
+        ...(finalBalance !== undefined ? { finalBalance, guessWinnerId } : {}),
+      },
     });
+  }
+
+  static async submitGuess(huntId: string, userId: string, guess: number): Promise<void> {
+    const hunt = await this.get(huntId);
+    if (hunt.status === HuntStatus.COMPLETED) throw createError.badRequest("This hunt is already complete — guessing is closed");
+    if (!Number.isFinite(guess) || guess < 0) throw createError.badRequest("guess must be a non-negative number");
+
+    await prisma.huntGuess.upsert({
+      where: { huntId_userId: { huntId, userId } },
+      update: { guess },
+      create: { huntId, userId, guess },
+    });
+  }
+
+  static async getMyGuess(huntId: string, userId: string): Promise<number | null> {
+    const row = await prisma.huntGuess.findUnique({ where: { huntId_userId: { huntId, userId } } });
+    return row ? Number(row.guess) : null;
+  }
+
+  static async getGuessCount(huntId: string): Promise<number> {
+    return prisma.huntGuess.count({ where: { huntId } });
+  }
+
+  static async getGuessWinner(huntId: string): Promise<{ displayName: string; avatarUrl: string | null; guess: number } | null> {
+    const hunt = await this.get(huntId);
+    if (!hunt.guessWinnerId) return null;
+    const winnerGuess = await prisma.huntGuess.findUnique({
+      where: { huntId_userId: { huntId, userId: hunt.guessWinnerId } },
+      include: { user: { select: { displayName: true, avatarUrl: true } } },
+    });
+    if (!winnerGuess) return null;
+    return { displayName: winnerGuess.user.displayName, avatarUrl: winnerGuess.user.avatarUrl, guess: Number(winnerGuess.guess) };
   }
 
   static async setLive(id: string): Promise<Hunt> {

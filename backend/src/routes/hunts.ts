@@ -8,6 +8,11 @@ const router = Router();
 router.get("/live", HuntController.getLive);
 router.get("/slug/:slug", HuntController.getBySlug);
 router.get("/:id", HuntController.get);
+router.get("/:id/guess-summary", HuntController.getGuessSummary);
+
+// Logged-in viewers — "Guess the Balance".
+router.get("/:id/my-guess", authMiddleware, HuntController.getMyGuess);
+router.post("/:id/guess", authMiddleware, HuntController.submitGuess);
 
 // Moderator/admin — building and running a hunt.
 router.use(authMiddleware, moderatorMiddleware);

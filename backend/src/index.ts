@@ -11,6 +11,7 @@ import { notFoundHandler, errorHandler } from "@/middleware/errorHandler";
 import { KickChatService } from "@/services/KickChatService";
 import { TwitchChatService } from "@/services/TwitchChatService";
 import { seedDefaults } from "@/bootstrap/seedDefaults";
+import { StreamStatusService } from "@/services/StreamStatusService";
 import authRoutes from "@/routes/auth";
 import adminRoutes from "@/routes/admin";
 import huntRoutes from "@/routes/hunts";
@@ -20,6 +21,7 @@ import leaderboardRoutes from "@/routes/leaderboard";
 import streamGamesRoutes from "@/routes/streamGames";
 import predictionsRoutes from "@/routes/predictions";
 import ladderRoutes from "@/routes/ladder";
+import giveawaysRoutes from "@/routes/giveaways";
 
 const app = express();
 
@@ -47,6 +49,7 @@ app.use("/api/leaderboard", leaderboardRoutes);
 app.use("/api/stream-games", streamGamesRoutes);
 app.use("/api/predictions", predictionsRoutes);
 app.use("/api/ladder", ladderRoutes);
+app.use("/api/giveaways", giveawaysRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
@@ -57,4 +60,5 @@ app.listen(env.PORT, () => {
 
 KickChatService.start();
 TwitchChatService.start();
+StreamStatusService.start();
 seedDefaults();
