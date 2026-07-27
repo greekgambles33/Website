@@ -23,18 +23,6 @@ const DEFAULT_SITE_CONTENT: Record<string, unknown> = {
     },
   ],
   store: [{ id: "sample-item-1", name: "Sample Store Item", price: 100, category: "Sample", limited: false }],
-  giveaway: {
-    title: "Sample Giveaway",
-    entriesOpen: false,
-    entryCost: 0,
-    freeEntryAvailable: true,
-    endsAt: "2026-08-03T20:00:00-05:00",
-    totalEntries: 0,
-  },
-  upcoming_giveaways: [
-    { id: "sample-giveaway-1", title: "Sample Upcoming Giveaway", startsAt: "2026-08-03T20:00:00-05:00", entryCost: 0, freeEntryAvailable: true },
-  ],
-  latest_winners: [{ id: "sample-winner-1", username: "SampleWinner", prize: "Sample Prize", date: "Sample date" }],
   community_highlights: [
     { id: "sample-highlight-1", username: "SampleUser", quote: "This is a sample community highlight — edit or delete it from Admin → Site Content." },
   ],

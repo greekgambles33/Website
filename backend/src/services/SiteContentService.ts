@@ -8,9 +8,6 @@ export const SITE_CONTENT_KEYS = [
   "community_stats",
   "announcements",
   "store",
-  "giveaway",
-  "upcoming_giveaways",
-  "latest_winners",
   "community_highlights",
   "games",
 ] as const;
