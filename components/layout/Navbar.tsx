@@ -25,10 +25,7 @@ export function Navbar() {
   const { user } = useAuth();
   const pathname = usePathname();
 
-  const navLinks = [
-    ...links,
-    ...(user?.isAdmin || user?.isModerator ? [{ label: "Hunt Tracker", href: "/hunt-tracker" }] : []),
-  ];
+  const navLinks = links;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
