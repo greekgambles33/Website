@@ -33,6 +33,9 @@ router.post("/:id/complete", HuntController.complete);
 router.post("/:id/guessing/open", HuntController.openGuessing);
 router.post("/:id/guessing/close", HuntController.closeGuessing);
 
+router.get("/:id/suggestions", HuntController.listSlotSuggestions);
+router.delete("/:id/suggestions/:suggestionId", HuntController.dismissSlotSuggestion);
+
 // Publishing to the public "live" slot is admin-only — a stricter gate than
 // day-to-day hunt building, mirroring how sensitive/broadcast actions are
 // scoped elsewhere in this codebase.

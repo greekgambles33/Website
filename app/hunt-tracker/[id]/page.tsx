@@ -17,6 +17,8 @@ import {
   ExternalLink,
   ArrowLeft,
   Crown,
+  MessageSquareText,
+  X,
 } from "lucide-react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Badge } from "@/components/ui/Badge";
@@ -37,9 +39,13 @@ import {
   goLive,
   takeDown,
   deleteHunt,
+  fetchSlotSuggestions,
+  dismissSlotSuggestion,
   HuntApiError,
 } from "@/lib/huntsApi";
-import type { Hunt, HuntBonus } from "@/lib/api";
+import type { Hunt, HuntBonus, HuntSlotSuggestion } from "@/lib/api";
+
+const SUGGESTIONS_POLL_MS = 5000;
 
 const statusTone = { COLLECTING: "neutral", OPENING: "live", COMPLETED: "gold" } as const;
 
@@ -54,8 +60,11 @@ export default function HuntBuilderPage() {
   const [busy, setBusy] = useState(false);
 
   const [showAddBonus, setShowAddBonus] = useState(false);
+  const [addBonusPrefillName, setAddBonusPrefillName] = useState<string | null>(null);
   const [editingBonus, setEditingBonus] = useState<HuntBonus | null>(null);
   const [openingBonus, setOpeningBonus] = useState<HuntBonus | null>(null);
+
+  const [suggestions, setSuggestions] = useState<HuntSlotSuggestion[]>([]);
 
   const load = useCallback(async () => {
     try {
@@ -72,6 +81,30 @@ export default function HuntBuilderPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (!hunt?.isLive) return;
+    const loadSuggestions = () => fetchSlotSuggestions(hunt.id).then(setSuggestions).catch(() => {});
+    loadSuggestions();
+    const interval = setInterval(loadSuggestions, SUGGESTIONS_POLL_MS);
+    return () => clearInterval(interval);
+  }, [hunt?.id, hunt?.isLive]);
+
+  const handleDismissSuggestion = async (suggestionId: string) => {
+    if (!hunt) return;
+    setSuggestions((prev) => prev.filter((s) => s.id !== suggestionId));
+    try {
+      await dismissSlotSuggestion(hunt.id, suggestionId);
+    } catch {
+      // best-effort — it'll reappear on the next poll if the delete actually failed
+    }
+  };
+
+  const handleAddSuggestion = (suggestion: HuntSlotSuggestion) => {
+    setAddBonusPrefillName(suggestion.slotName);
+    setShowAddBonus(true);
+    handleDismissSuggestion(suggestion.id);
+  };
 
   const runAction = async (action: () => Promise<Hunt>) => {
     setBusy(true);
@@ -283,6 +316,47 @@ export default function HuntBuilderPage() {
         </p>
       </div>
 
+      {hunt.isLive && suggestions.length > 0 && (
+        <GlassCard>
+          <div className="flex items-center gap-2">
+            <MessageSquareText size={15} className="text-lava-400" />
+            <h3 className="font-heading text-sm font-semibold uppercase tracking-widest text-ash-100">
+              Suggested Slots
+            </h3>
+            <span className="text-xs text-ash-500">
+              from !sr in chat &middot; {suggestions.length}
+            </span>
+          </div>
+          <div className="mt-3 space-y-1.5">
+            {suggestions.map((s) => (
+              <div key={s.id} className="flex items-center justify-between gap-3 rounded-lg bg-white/[0.03] px-3 py-2">
+                <div className="min-w-0">
+                  <p className="truncate text-sm text-white">{s.slotName}</p>
+                  <p className="text-xs text-ash-500">
+                    @{s.chatUsername} &middot; {s.source === "TWITCH" ? "Twitch" : "Kick"}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  <button
+                    onClick={() => handleAddSuggestion(s)}
+                    className="font-heading rounded-full border border-lava-400/40 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-lava-300 hover:bg-lava-500/10"
+                  >
+                    Add to Hunt
+                  </button>
+                  <button
+                    onClick={() => handleDismissSuggestion(s.id)}
+                    aria-label="Dismiss suggestion"
+                    className="rounded-full p-1.5 text-ash-500 hover:bg-white/5 hover:text-white"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </GlassCard>
+      )}
+
       <GlassCard className="p-0">
         {hunt.bonuses.length === 0 ? (
           <p className="p-8 text-center text-sm text-ash-400">No bonuses yet — add the first one to get started.</p>
@@ -375,11 +449,16 @@ export default function HuntBuilderPage() {
       {showAddBonus && (
         <BonusModal
           title="Add Bonus"
-          onClose={() => setShowAddBonus(false)}
+          initial={addBonusPrefillName ? { slotName: addBonusPrefillName } : undefined}
+          onClose={() => {
+            setShowAddBonus(false);
+            setAddBonusPrefillName(null);
+          }}
           onSubmit={async (data) => {
             const updated = await addBonus(hunt.id, data);
             setHunt(updated);
             setShowAddBonus(false);
+            setAddBonusPrefillName(null);
           }}
         />
       )}
@@ -433,7 +512,7 @@ function BonusModal({
   onSubmit,
 }: {
   title: string;
-  initial?: HuntBonus;
+  initial?: Partial<HuntBonus>;
   onClose: () => void;
   onSubmit: (data: { slotName: string; provider: string; image: string | null; bet: number; note: string | null }) => Promise<void>;
 }) {

@@ -6,8 +6,10 @@ import { CustomError } from "@/middleware/errorHandler";
 const SLOT_REQUEST_COMMAND = /^!sr\s+(.+)/i;
 
 /** !sr <slot name> — a chat shortcut for the same slot-call form on the
- * tournament page. Only works for a verified chatter who's actually been
- * drawn into the tournament currently in slot selection. */
+ * tournament page. Only "claims" the command (returns non-null) for a
+ * verified chatter who's actually been drawn into the tournament currently
+ * in slot selection — everyone else falls through silently so the same
+ * command can also mean "suggest a slot" for a live Bonus Hunt. */
 export async function handleTournamentCommand(
   rawText: string,
   chatUsername: string,
@@ -23,7 +25,7 @@ export async function handleTournamentCommand(
     where: { status: TournamentStatus.SLOT_SELECTION },
     orderBy: { createdAt: "desc" },
   });
-  if (!tournament) return `@${chatUsername} no tournament is picking slots right now.`;
+  if (!tournament) return null;
 
   const user = await prisma.user.findFirst({
     where:
@@ -32,7 +34,12 @@ export async function handleTournamentCommand(
         : { kickUsername: { equals: chatUsername, mode: "insensitive" }, kickVerified: true },
     select: { id: true },
   });
-  if (!user) return `@${chatUsername} link your account on the site first to call a slot from chat.`;
+  if (!user) return null;
+
+  const participant = await prisma.tournamentParticipant.findUnique({
+    where: { tournamentId_userId: { tournamentId: tournament.id, userId: user.id } },
+  });
+  if (!participant) return null;
 
   try {
     await TournamentService.setSlot(tournament.id, user.id, slotName);

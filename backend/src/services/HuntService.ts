@@ -1,7 +1,9 @@
 import { randomUUID } from "crypto";
-import { Prisma, HuntStatus, type Hunt } from "@prisma/client";
+import { Prisma, HuntStatus, PredictionVoteSource, type Hunt } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { createError } from "@/middleware/errorHandler";
+
+const MAX_SLOT_SUGGESTIONS_PER_HUNT = 200;
 
 export interface HuntBonus {
   id: string;
@@ -312,6 +314,37 @@ export class HuntService {
     });
     if (!winnerGuess) return null;
     return { displayName: winnerGuess.user.displayName, avatarUrl: winnerGuess.user.avatarUrl, guess: Number(winnerGuess.guess) };
+  }
+
+  /** !sr <slot name> in chat while a hunt is live — queued for the admin
+   * to review, never auto-added (a chat suggestion has no bet amount). */
+  static async suggestSlot(
+    huntId: string,
+    chatUsername: string,
+    source: PredictionVoteSource,
+    slotName: string
+  ): Promise<void> {
+    const hunt = await this.get(huntId);
+    if (!hunt.isLive) return;
+
+    const trimmed = slotName.trim().slice(0, 120);
+    if (!trimmed) return;
+
+    const count = await prisma.huntSlotSuggestion.count({ where: { huntId } });
+    if (count >= MAX_SLOT_SUGGESTIONS_PER_HUNT) return;
+
+    await prisma.huntSlotSuggestion.create({
+      data: { huntId, chatUsername: chatUsername.trim().slice(0, 80), source, slotName: trimmed },
+    });
+  }
+
+  static async listSlotSuggestions(huntId: string) {
+    return prisma.huntSlotSuggestion.findMany({ where: { huntId }, orderBy: { createdAt: "desc" } });
+  }
+
+  static async dismissSlotSuggestion(huntId: string, suggestionId: string): Promise<void> {
+    const result = await prisma.huntSlotSuggestion.deleteMany({ where: { id: suggestionId, huntId } });
+    if (result.count === 0) throw createError.notFound("Suggestion not found");
   }
 
   static async setLive(id: string): Promise<Hunt> {

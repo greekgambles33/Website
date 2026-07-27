@@ -1,6 +1,6 @@
 "use client";
 
-import { API_ENDPOINTS, type Hunt, type HuntGuessWinner } from "@/lib/api";
+import { API_ENDPOINTS, type Hunt, type HuntGuessWinner, type HuntSlotSuggestion } from "@/lib/api";
 import { getAccessToken } from "@/lib/authPersistence";
 
 export class HuntApiError extends Error {}
@@ -158,4 +158,17 @@ export async function goLive(id: string): Promise<Hunt> {
 export async function takeDown(id: string): Promise<Hunt> {
   const data = await huntFetch<{ hunt: Hunt }>(API_ENDPOINTS.HUNT_LIVE_TOGGLE(id), { method: "DELETE" });
   return data.hunt;
+}
+
+// ---------- Suggested slots (!sr in chat while a hunt is live) ----------
+
+export async function fetchSlotSuggestions(id: string): Promise<HuntSlotSuggestion[]> {
+  const data = await huntFetch<{ suggestions: HuntSlotSuggestion[] }>(API_ENDPOINTS.HUNT_SUGGESTIONS(id), {
+    cache: "no-store",
+  });
+  return data.suggestions;
+}
+
+export async function dismissSlotSuggestion(id: string, suggestionId: string): Promise<void> {
+  await huntFetch(API_ENDPOINTS.HUNT_SUGGESTION(id, suggestionId), { method: "DELETE" });
 }

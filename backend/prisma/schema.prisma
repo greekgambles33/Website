@@ -116,6 +116,11 @@ model Hunt {
   guessWinner    User?    @relation("HuntGuessWinner", fields: [guessWinnerId], references: [id], onDelete: SetNull)
   guesses        HuntGuess[]
 
+  /// !sr <slot name> in Twitch/Kick chat while the hunt is live — a raw
+  /// suggestion queue for the admin to review, not auto-added (no bet
+  /// amount comes with a chat suggestion).
+  slotSuggestions HuntSlotSuggestion[]
+
   createdById String @map("created_by_id")
   createdBy   User   @relation(fields: [createdById], references: [id])
 
@@ -141,6 +146,20 @@ model HuntGuess {
 
   @@unique([huntId, userId])
   @@map("hunt_guesses")
+}
+
+model HuntSlotSuggestion {
+  id           String               @id @default(uuid())
+  huntId       String               @map("hunt_id")
+  slotName     String               @map("slot_name")
+  chatUsername String               @map("chat_username")
+  source       PredictionVoteSource
+  createdAt    DateTime             @default(now()) @map("created_at")
+
+  hunt Hunt @relation(fields: [huntId], references: [id], onDelete: Cascade)
+
+  @@index([huntId], map: "idx_hunt_slot_suggestions_hunt")
+  @@map("hunt_slot_suggestions")
 }
 
 enum TournamentStatus {

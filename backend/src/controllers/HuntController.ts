@@ -154,6 +154,16 @@ export const HuntController = {
     res.json({ success: true, count, winner });
   }),
 
+  listSlotSuggestions: asyncHandler(async (req: Request, res: Response) => {
+    const suggestions = await HuntService.listSlotSuggestions(req.params.id);
+    res.json({ success: true, suggestions });
+  }),
+
+  dismissSlotSuggestion: asyncHandler(async (req: Request, res: Response) => {
+    await HuntService.dismissSlotSuggestion(req.params.id, req.params.suggestionId);
+    res.json({ success: true });
+  }),
+
   setLive: asyncHandler(async (req: Request, res: Response) => {
     const hunt = await HuntService.setLive(req.params.id);
     res.json({ success: true, hunt: serializeHunt(hunt) });

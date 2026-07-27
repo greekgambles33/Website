@@ -38,6 +38,8 @@ export const API_ENDPOINTS = {
   HUNT_COMPLETE: (id: string) => `${API_URL}/api/hunts/${id}/complete`,
   HUNT_GUESSING_OPEN: (id: string) => `${API_URL}/api/hunts/${id}/guessing/open`,
   HUNT_GUESSING_CLOSE: (id: string) => `${API_URL}/api/hunts/${id}/guessing/close`,
+  HUNT_SUGGESTIONS: (id: string) => `${API_URL}/api/hunts/${id}/suggestions`,
+  HUNT_SUGGESTION: (id: string, suggestionId: string) => `${API_URL}/api/hunts/${id}/suggestions/${suggestionId}`,
   HUNT_LIVE_TOGGLE: (id: string) => `${API_URL}/api/hunts/${id}/live`,
   HUNT_GUESS_SUMMARY: (id: string) => `${API_URL}/api/hunts/${id}/guess-summary`,
   HUNT_MY_GUESS: (id: string) => `${API_URL}/api/hunts/${id}/my-guess`,
@@ -188,6 +190,15 @@ export interface HuntGuessWinner {
   displayName: string;
   avatarUrl: string | null;
   guess: number;
+}
+
+export interface HuntSlotSuggestion {
+  id: string;
+  huntId: string;
+  slotName: string;
+  chatUsername: string;
+  source: "TWITCH" | "KICK";
+  createdAt: string;
 }
 
 // ---------- Giveaways (real raffle entries) ----------
