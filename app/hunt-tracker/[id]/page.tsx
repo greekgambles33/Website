@@ -32,6 +32,8 @@ import {
   shuffleBonuses,
   startHunt,
   completeHunt,
+  openGuessing,
+  closeGuessing,
   goLive,
   takeDown,
   deleteHunt,
@@ -172,6 +174,33 @@ export default function HuntBuilderPage() {
               <Play size={13} /> Start Hunt
             </button>
           )}
+          {hunt.status !== "COMPLETED" &&
+            (hunt.guessesOpen ? (
+              <button
+                disabled={busy}
+                onClick={() => runAction(() => closeGuessing(hunt.id))}
+                className="font-heading flex items-center gap-1.5 rounded-[10px] border border-lava-400/40 px-4 py-2 text-xs font-bold uppercase tracking-wide text-lava-300 disabled:opacity-50"
+              >
+                <Crown size={13} /> Close Guessing ({hunt.guessPrizeCoins} coins)
+              </button>
+            ) : (
+              <button
+                disabled={busy}
+                onClick={() => {
+                  const raw = prompt("Prize for the closest guess, in CatCoins:", "100");
+                  if (raw === null) return;
+                  const prizeCoins = Number(raw);
+                  if (!Number.isInteger(prizeCoins) || prizeCoins < 0) {
+                    alert("Prize must be a non-negative whole number");
+                    return;
+                  }
+                  runAction(() => openGuessing(hunt.id, prizeCoins));
+                }}
+                className="font-heading flex items-center gap-1.5 rounded-[10px] border border-white/10 px-4 py-2 text-xs font-bold uppercase tracking-wide text-ash-300 hover:text-white disabled:opacity-50"
+              >
+                <Crown size={13} /> Open Guess the Balance
+              </button>
+            ))}
           {hunt.status !== "COMPLETED" && (
             <button
               disabled={busy}

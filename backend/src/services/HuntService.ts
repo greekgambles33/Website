@@ -219,7 +219,8 @@ export class HuntService {
   }
 
   /** finalBalance, if given, also settles "Guess the Balance": whoever's
-   * guess is closest wins. Ties go to whoever guessed first. */
+   * guess is closest wins guessPrizeCoins (ties go to whoever guessed
+   * first). No-op reward if nobody guessed or the prize is 0. */
   static async complete(id: string, finalBalance?: number): Promise<Hunt> {
     const hunt = await this.get(id);
     if (hunt.status === HuntStatus.COMPLETED) throw createError.badRequest("Hunt is already completed");
@@ -242,20 +243,48 @@ export class HuntService {
       guessWinnerId = best?.userId ?? null;
     }
 
-    return prisma.hunt.update({
-      where: { id },
-      data: {
-        status: HuntStatus.COMPLETED,
-        completedAt: new Date(),
-        isLive: false,
-        ...(finalBalance !== undefined ? { finalBalance, guessWinnerId } : {}),
-      },
+    return prisma.$transaction(async (tx) => {
+      const updated = await tx.hunt.update({
+        where: { id },
+        data: {
+          status: HuntStatus.COMPLETED,
+          completedAt: new Date(),
+          isLive: false,
+          guessesOpen: false,
+          ...(finalBalance !== undefined ? { finalBalance, guessWinnerId } : {}),
+        },
+      });
+
+      if (guessWinnerId && hunt.guessPrizeCoins > 0) {
+        await tx.user.update({
+          where: { id: guessWinnerId },
+          data: {
+            catCoinBalance: { increment: hunt.guessPrizeCoins },
+            totalEarned: { increment: hunt.guessPrizeCoins },
+          },
+        });
+      }
+
+      return updated;
     });
+  }
+
+  static async openGuessing(id: string, prizeCoins: number): Promise<Hunt> {
+    const hunt = await this.get(id);
+    if (hunt.status === HuntStatus.COMPLETED) throw createError.badRequest("This hunt is already complete");
+    if (!Number.isInteger(prizeCoins) || prizeCoins < 0) throw createError.badRequest("prizeCoins must be a non-negative integer");
+
+    return prisma.hunt.update({ where: { id }, data: { guessesOpen: true, guessPrizeCoins: prizeCoins } });
+  }
+
+  static async closeGuessing(id: string): Promise<Hunt> {
+    await this.get(id);
+    return prisma.hunt.update({ where: { id }, data: { guessesOpen: false } });
   }
 
   static async submitGuess(huntId: string, userId: string, guess: number): Promise<void> {
     const hunt = await this.get(huntId);
-    if (hunt.status === HuntStatus.COMPLETED) throw createError.badRequest("This hunt is already complete — guessing is closed");
+    if (!hunt.guessesOpen) throw createError.badRequest("Guessing isn't open for this hunt right now");
     if (!Number.isFinite(guess) || guess < 0) throw createError.badRequest("guess must be a non-negative number");
 
     await prisma.huntGuess.upsert({

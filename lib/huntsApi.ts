@@ -122,6 +122,19 @@ export async function completeHunt(id: string, finalBalance?: number): Promise<H
   return data.hunt;
 }
 
+export async function openGuessing(id: string, prizeCoins: number): Promise<Hunt> {
+  const data = await huntFetch<{ hunt: Hunt }>(API_ENDPOINTS.HUNT_GUESSING_OPEN(id), {
+    method: "POST",
+    body: JSON.stringify({ prizeCoins }),
+  });
+  return data.hunt;
+}
+
+export async function closeGuessing(id: string): Promise<Hunt> {
+  const data = await huntFetch<{ hunt: Hunt }>(API_ENDPOINTS.HUNT_GUESSING_CLOSE(id), { method: "POST" });
+  return data.hunt;
+}
+
 // ---------- Guess the Balance ----------
 
 export async function fetchGuessSummary(id: string): Promise<{ count: number; winner: HuntGuessWinner | null }> {

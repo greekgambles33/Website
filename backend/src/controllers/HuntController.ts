@@ -43,6 +43,10 @@ const guessSchema = z.object({
   guess: z.number().nonnegative(),
 });
 
+const openGuessingSchema = z.object({
+  prizeCoins: z.number().int().nonnegative(),
+});
+
 export const HuntController = {
   list: asyncHandler(async (_req: Request, res: Response) => {
     const hunts = await HuntService.list();
@@ -117,6 +121,17 @@ export const HuntController = {
   complete: asyncHandler(async (req: Request, res: Response) => {
     const { finalBalance } = parseBody(completeSchema, req.body);
     const hunt = await HuntService.complete(req.params.id, finalBalance);
+    res.json({ success: true, hunt: serializeHunt(hunt) });
+  }),
+
+  openGuessing: asyncHandler(async (req: Request, res: Response) => {
+    const { prizeCoins } = parseBody(openGuessingSchema, req.body);
+    const hunt = await HuntService.openGuessing(req.params.id, prizeCoins);
+    res.json({ success: true, hunt: serializeHunt(hunt) });
+  }),
+
+  closeGuessing: asyncHandler(async (req: Request, res: Response) => {
+    const hunt = await HuntService.closeGuessing(req.params.id);
     res.json({ success: true, hunt: serializeHunt(hunt) });
   }),
 

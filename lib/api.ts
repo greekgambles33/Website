@@ -36,6 +36,8 @@ export const API_ENDPOINTS = {
   HUNT_SHUFFLE: (id: string) => `${API_URL}/api/hunts/${id}/shuffle`,
   HUNT_START: (id: string) => `${API_URL}/api/hunts/${id}/start`,
   HUNT_COMPLETE: (id: string) => `${API_URL}/api/hunts/${id}/complete`,
+  HUNT_GUESSING_OPEN: (id: string) => `${API_URL}/api/hunts/${id}/guessing/open`,
+  HUNT_GUESSING_CLOSE: (id: string) => `${API_URL}/api/hunts/${id}/guessing/close`,
   HUNT_LIVE_TOGGLE: (id: string) => `${API_URL}/api/hunts/${id}/live`,
   HUNT_GUESS_SUMMARY: (id: string) => `${API_URL}/api/hunts/${id}/guess-summary`,
   HUNT_MY_GUESS: (id: string) => `${API_URL}/api/hunts/${id}/my-guess`,
@@ -171,6 +173,8 @@ export interface Hunt {
   bonuses: HuntBonus[];
   status: HuntStatus;
   isLive: boolean;
+  guessesOpen: boolean;
+  guessPrizeCoins: number;
   finalBalance: number | null;
   guessWinnerId: string | null;
   createdById: string;

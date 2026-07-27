@@ -54,6 +54,8 @@ function GuessTheBalance({ hunt }: { hunt: Hunt }) {
     }
   };
 
+  if (hunt.status !== "COMPLETED" && !hunt.guessesOpen) return null;
+
   return (
     <GlassCard className="mx-auto mt-8 max-w-3xl">
       <div className="flex items-center gap-2">
@@ -70,7 +72,8 @@ function GuessTheBalance({ hunt }: { hunt: Hunt }) {
           </p>
           {winner ? (
             <p className="mt-2 flex items-center justify-center gap-1.5 text-sm text-gold-300">
-              <Trophy size={15} /> {winner.displayName} won with a guess of {formatCurrency(winner.guess, hunt.currency)}
+              <Trophy size={15} /> {winner.displayName} won {hunt.guessPrizeCoins.toLocaleString()} CatCoins with a guess of{" "}
+              {formatCurrency(winner.guess, hunt.currency)}
             </p>
           ) : (
             <p className="mt-2 text-xs text-ash-500">No guesses were submitted for this hunt.</p>
@@ -79,7 +82,8 @@ function GuessTheBalance({ hunt }: { hunt: Hunt }) {
       ) : (
         <div className="mt-3">
           <p className="text-xs text-ash-400">
-            Closest guess to the final balance wins bragging rights. {count} guess{count === 1 ? "" : "es"} so far.
+            Closest guess to the final balance wins {hunt.guessPrizeCoins.toLocaleString()} CatCoins. {count} guess
+            {count === 1 ? "" : "es"} so far.
           </p>
           {user ? (
             <div className="mt-3 flex gap-2">

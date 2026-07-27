@@ -105,12 +105,16 @@ model Hunt {
   status        HuntStatus @default(COLLECTING)
   isLive        Boolean    @default(false) @map("is_live")
 
-  /// "Guess the Balance" — viewers guess where the hunt will end up;
-  /// closest guess wins once the admin enters the real final balance.
-  finalBalance  Decimal? @map("final_balance") @db.Decimal(12, 2)
-  guessWinnerId String?  @map("guess_winner_id")
-  guessWinner   User?    @relation("HuntGuessWinner", fields: [guessWinnerId], references: [id], onDelete: SetNull)
-  guesses       HuntGuess[]
+  /// "Guess the Balance" — the admin explicitly opens guessing (typically
+  /// once bonus collection is done), viewers guess where the hunt will end
+  /// up, and closest guess wins guessPrizeCoins once the admin enters the
+  /// real final balance.
+  guessesOpen    Boolean  @default(false) @map("guesses_open")
+  guessPrizeCoins Int     @default(0) @map("guess_prize_coins")
+  finalBalance   Decimal? @map("final_balance") @db.Decimal(12, 2)
+  guessWinnerId  String?  @map("guess_winner_id")
+  guessWinner    User?    @relation("HuntGuessWinner", fields: [guessWinnerId], references: [id], onDelete: SetNull)
+  guesses        HuntGuess[]
 
   createdById String @map("created_by_id")
   createdBy   User   @relation(fields: [createdById], references: [id])
