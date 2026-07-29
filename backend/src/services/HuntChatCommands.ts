@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { HuntService } from "@/services/HuntService";
 
 const SLOT_REQUEST_COMMAND = /^!sr\s+(.+)/i;
+const GUESS_COMMAND = /^!guess\s+\$?([\d,]+(?:\.\d+)?)/i;
 
 /** Recognized provider prefixes for !sr, longest alias first so "no limit
  * city" matches before the shorter "no limit". Canonical names here must
@@ -75,4 +76,41 @@ export async function handleHuntSuggestion(
 
   await HuntService.suggestSlot(hunt.id, chatUsername, source, slotName, provider);
   return null;
+}
+
+/** !guess <amount> — "Guess the Balance" from chat, e.g. "!guess 1250" or
+ * "!guess $1,250.50". Only works while the admin has guessing open, and
+ * only for a verified Twitch/Kick account (same as every other chat game —
+ * there's no site account to credit a guess to otherwise). Replies once on
+ * a successful submission; silent on anything that doesn't apply, so
+ * viewers testing the command before it's open don't spam chat. */
+export async function handleGuessCommand(
+  rawText: string,
+  chatUsername: string,
+  source: PredictionVoteSource
+): Promise<string | null> {
+  const match = rawText.trim().match(GUESS_COMMAND);
+  if (!match) return null;
+
+  const guess = Number(match[1].replace(/,/g, ""));
+  if (!Number.isFinite(guess) || guess < 0) return null;
+
+  const hunt = await prisma.hunt.findFirst({ where: { guessesOpen: true }, orderBy: { updatedAt: "desc" } });
+  if (!hunt) return null;
+
+  const user = await prisma.user.findFirst({
+    where:
+      source === PredictionVoteSource.TWITCH
+        ? { twitchUsername: { equals: chatUsername, mode: "insensitive" }, twitchVerified: true }
+        : { kickUsername: { equals: chatUsername, mode: "insensitive" }, kickVerified: true },
+    select: { id: true },
+  });
+  if (!user) return null;
+
+  try {
+    await HuntService.submitGuess(hunt.id, user.id, guess);
+    return `@${chatUsername} guess locked in: ${guess.toFixed(2)} ${hunt.currency}`;
+  } catch {
+    return null;
+  }
 }

@@ -105,6 +105,10 @@ function GuessTheBalance({ hunt }: { hunt: Hunt }) {
           {myGuess !== null && !error && (
             <p className="mt-2 text-xs text-lava-300">Your current guess: {formatCurrency(myGuess, hunt.currency)}</p>
           )}
+          <p className="mt-3 text-xs text-ash-500">
+            Or from Twitch/Kick chat: <code className="rounded bg-ash-800 px-1.5 py-0.5 text-lava-300">!guess 1250</code>{" "}
+            (linked account required)
+          </p>
           {error && <p className="mt-2 text-xs text-crimson-400">{error}</p>}
         </div>
       )}
