@@ -316,13 +316,15 @@ export class HuntService {
     return { displayName: winnerGuess.user.displayName, avatarUrl: winnerGuess.user.avatarUrl, guess: Number(winnerGuess.guess) };
   }
 
-  /** !sr <slot name> in chat while a hunt is live — queued for the admin
-   * to review, never auto-added (a chat suggestion has no bet amount). */
+  /** !sr [provider] <slot name> in chat while a hunt is live — queued for
+   * the admin to review, never auto-added (a chat suggestion has no bet
+   * amount). provider defaults to "Other" when nothing was recognized. */
   static async suggestSlot(
     huntId: string,
     chatUsername: string,
     source: PredictionVoteSource,
-    slotName: string
+    slotName: string,
+    provider = "Other"
   ): Promise<void> {
     const hunt = await this.get(huntId);
     if (!hunt.isLive) return;
@@ -334,7 +336,13 @@ export class HuntService {
     if (count >= MAX_SLOT_SUGGESTIONS_PER_HUNT) return;
 
     await prisma.huntSlotSuggestion.create({
-      data: { huntId, chatUsername: chatUsername.trim().slice(0, 80), source, slotName: trimmed },
+      data: {
+        huntId,
+        chatUsername: chatUsername.trim().slice(0, 80),
+        source,
+        slotName: trimmed,
+        provider: provider.trim().slice(0, 60) || "Other",
+      },
     });
   }
 
@@ -344,6 +352,17 @@ export class HuntService {
 
   static async dismissSlotSuggestion(huntId: string, suggestionId: string): Promise<void> {
     const result = await prisma.huntSlotSuggestion.deleteMany({ where: { id: suggestionId, huntId } });
+    if (result.count === 0) throw createError.notFound("Suggestion not found");
+  }
+
+  static async retagSlotSuggestion(huntId: string, suggestionId: string, provider: string) {
+    const trimmed = provider.trim().slice(0, 60);
+    if (!trimmed) throw createError.badRequest("provider is required");
+
+    const result = await prisma.huntSlotSuggestion.updateMany({
+      where: { id: suggestionId, huntId },
+      data: { provider: trimmed },
+    });
     if (result.count === 0) throw createError.notFound("Suggestion not found");
   }
 

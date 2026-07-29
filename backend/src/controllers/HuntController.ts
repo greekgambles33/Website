@@ -47,6 +47,10 @@ const openGuessingSchema = z.object({
   prizeCoins: z.number().int().nonnegative(),
 });
 
+const retagSuggestionSchema = z.object({
+  provider: z.string().min(1).max(60),
+});
+
 export const HuntController = {
   list: asyncHandler(async (_req: Request, res: Response) => {
     const hunts = await HuntService.list();
@@ -161,6 +165,12 @@ export const HuntController = {
 
   dismissSlotSuggestion: asyncHandler(async (req: Request, res: Response) => {
     await HuntService.dismissSlotSuggestion(req.params.id, req.params.suggestionId);
+    res.json({ success: true });
+  }),
+
+  retagSlotSuggestion: asyncHandler(async (req: Request, res: Response) => {
+    const { provider } = parseBody(retagSuggestionSchema, req.body);
+    await HuntService.retagSlotSuggestion(req.params.id, req.params.suggestionId, provider);
     res.json({ success: true });
   }),
 

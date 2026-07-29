@@ -41,13 +41,31 @@ import {
   deleteHunt,
   fetchSlotSuggestions,
   dismissSlotSuggestion,
+  retagSlotSuggestion,
   HuntApiError,
 } from "@/lib/huntsApi";
-import type { Hunt, HuntBonus, HuntSlotSuggestion } from "@/lib/api";
+import { SLOT_PROVIDERS, type Hunt, type HuntBonus, type HuntSlotSuggestion } from "@/lib/api";
 
 const SUGGESTIONS_POLL_MS = 5000;
 
 const statusTone = { COLLECTING: "neutral", OPENING: "live", COMPLETED: "gold" } as const;
+
+/** Known providers first (in their defined order), then any custom-tagged
+ * ones alphabetically, with "Other" always last. */
+function groupSuggestionsByProvider(suggestions: HuntSlotSuggestion[]): [string, HuntSlotSuggestion[]][] {
+  const byProvider = new Map<string, HuntSlotSuggestion[]>();
+  for (const s of suggestions) {
+    const group = byProvider.get(s.provider) ?? [];
+    group.push(s);
+    byProvider.set(s.provider, group);
+  }
+
+  const known = SLOT_PROVIDERS.filter((p) => p !== "Other" && byProvider.has(p));
+  const custom = [...byProvider.keys()].filter((p) => !SLOT_PROVIDERS.includes(p as (typeof SLOT_PROVIDERS)[number])).sort();
+  const rest = byProvider.has("Other") ? ["Other"] : [];
+
+  return [...known, ...custom, ...rest].map((p) => [p, byProvider.get(p)!]);
+}
 
 export default function HuntBuilderPage() {
   const params = useParams<{ id: string }>();
@@ -60,7 +78,7 @@ export default function HuntBuilderPage() {
   const [busy, setBusy] = useState(false);
 
   const [showAddBonus, setShowAddBonus] = useState(false);
-  const [addBonusPrefillName, setAddBonusPrefillName] = useState<string | null>(null);
+  const [addBonusPrefill, setAddBonusPrefill] = useState<{ slotName: string; provider?: string } | null>(null);
   const [editingBonus, setEditingBonus] = useState<HuntBonus | null>(null);
   const [openingBonus, setOpeningBonus] = useState<HuntBonus | null>(null);
 
@@ -101,9 +119,22 @@ export default function HuntBuilderPage() {
   };
 
   const handleAddSuggestion = (suggestion: HuntSlotSuggestion) => {
-    setAddBonusPrefillName(suggestion.slotName);
+    setAddBonusPrefill({
+      slotName: suggestion.slotName,
+      provider: suggestion.provider !== "Other" ? suggestion.provider : undefined,
+    });
     setShowAddBonus(true);
     handleDismissSuggestion(suggestion.id);
+  };
+
+  const handleRetagSuggestion = async (suggestionId: string, provider: string) => {
+    if (!hunt) return;
+    setSuggestions((prev) => prev.map((s) => (s.id === suggestionId ? { ...s, provider } : s)));
+    try {
+      await retagSlotSuggestion(hunt.id, suggestionId, provider);
+    } catch {
+      // best-effort — a stale tag is harmless, next poll will resync anyway
+    }
   };
 
   const runAction = async (action: () => Promise<Hunt>) => {
@@ -327,29 +358,53 @@ export default function HuntBuilderPage() {
               from !sr in chat &middot; {suggestions.length}
             </span>
           </div>
-          <div className="mt-3 space-y-1.5">
-            {suggestions.map((s) => (
-              <div key={s.id} className="flex items-center justify-between gap-3 rounded-lg bg-white/[0.03] px-3 py-2">
-                <div className="min-w-0">
-                  <p className="truncate text-sm text-white">{s.slotName}</p>
-                  <p className="text-xs text-ash-500">
-                    @{s.chatUsername} &middot; {s.source === "TWITCH" ? "Twitch" : "Kick"}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  <button
-                    onClick={() => handleAddSuggestion(s)}
-                    className="font-heading rounded-full border border-lava-400/40 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-lava-300 hover:bg-lava-500/10"
-                  >
-                    Add to Hunt
-                  </button>
-                  <button
-                    onClick={() => handleDismissSuggestion(s.id)}
-                    aria-label="Dismiss suggestion"
-                    className="rounded-full p-1.5 text-ash-500 hover:bg-white/5 hover:text-white"
-                  >
-                    <X size={14} />
-                  </button>
+
+          <div className="mt-3 space-y-4">
+            {groupSuggestionsByProvider(suggestions).map(([provider, group]) => (
+              <div key={provider}>
+                <p className="font-heading text-[11px] font-semibold uppercase tracking-widest text-ash-500">
+                  {provider} <span className="text-ash-600">&middot; {group.length}</span>
+                </p>
+                <div className="mt-1.5 space-y-1.5">
+                  {group.map((s) => (
+                    <div
+                      key={s.id}
+                      className="flex items-center justify-between gap-3 rounded-lg bg-white/[0.03] px-3 py-2"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm text-white">{s.slotName}</p>
+                        <p className="text-xs text-ash-500">
+                          @{s.chatUsername} &middot; {s.source === "TWITCH" ? "Twitch" : "Kick"}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        <select
+                          value={s.provider}
+                          onChange={(e) => handleRetagSuggestion(s.id, e.target.value)}
+                          className="rounded-lg border border-white/10 bg-ash-900/60 px-2 py-1.5 text-[11px] text-ash-300 focus:border-lava-500/50 focus:outline-none"
+                        >
+                          {SLOT_PROVIDERS.map((p) => (
+                            <option key={p} value={p}>
+                              {p}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => handleAddSuggestion(s)}
+                          className="font-heading rounded-full border border-lava-400/40 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-lava-300 hover:bg-lava-500/10"
+                        >
+                          Add to Hunt
+                        </button>
+                        <button
+                          onClick={() => handleDismissSuggestion(s.id)}
+                          aria-label="Dismiss suggestion"
+                          className="rounded-full p-1.5 text-ash-500 hover:bg-white/5 hover:text-white"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
@@ -449,16 +504,16 @@ export default function HuntBuilderPage() {
       {showAddBonus && (
         <BonusModal
           title="Add Bonus"
-          initial={addBonusPrefillName ? { slotName: addBonusPrefillName } : undefined}
+          initial={addBonusPrefill ?? undefined}
           onClose={() => {
             setShowAddBonus(false);
-            setAddBonusPrefillName(null);
+            setAddBonusPrefill(null);
           }}
           onSubmit={async (data) => {
             const updated = await addBonus(hunt.id, data);
             setHunt(updated);
             setShowAddBonus(false);
-            setAddBonusPrefillName(null);
+            setAddBonusPrefill(null);
           }}
         />
       )}

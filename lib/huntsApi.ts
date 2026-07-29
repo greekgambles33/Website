@@ -172,3 +172,10 @@ export async function fetchSlotSuggestions(id: string): Promise<HuntSlotSuggesti
 export async function dismissSlotSuggestion(id: string, suggestionId: string): Promise<void> {
   await huntFetch(API_ENDPOINTS.HUNT_SUGGESTION(id, suggestionId), { method: "DELETE" });
 }
+
+export async function retagSlotSuggestion(id: string, suggestionId: string, provider: string): Promise<void> {
+  await huntFetch(API_ENDPOINTS.HUNT_SUGGESTION_PROVIDER(id, suggestionId), {
+    method: "PUT",
+    body: JSON.stringify({ provider }),
+  });
+}

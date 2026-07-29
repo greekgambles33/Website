@@ -152,6 +152,9 @@ model HuntSlotSuggestion {
   id           String               @id @default(uuid())
   huntId       String               @map("hunt_id")
   slotName     String               @map("slot_name")
+  /// Parsed from a recognized provider prefix in the !sr command (e.g.
+  /// "pragmatic <name>"), or "Other" if none matched — admin can retag.
+  provider     String               @default("Other")
   chatUsername String               @map("chat_username")
   source       PredictionVoteSource
   createdAt    DateTime             @default(now()) @map("created_at")
