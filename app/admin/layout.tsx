@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Loader2, LayoutDashboard, Users, ScrollText, ArrowLeft, Trophy, FileText, Gamepad2, Compass, Gift } from "lucide-react";
+import { Loader2, LayoutDashboard, Users, ScrollText, ArrowLeft, Trophy, FileText, Gamepad2, Compass, Gift, TrendingUp } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Coin } from "@/components/ui/Coin";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,7 @@ const navItems = [
   { label: "Tournament", href: "/admin/tournament", icon: Trophy },
   { label: "Stream Games", href: "/admin/stream-games", icon: Gamepad2 },
   { label: "Giveaways", href: "/admin/giveaways", icon: Gift },
+  { label: "Wager Leaderboard", href: "/admin/wager-leaderboard", icon: TrendingUp },
   { label: "Hunt Tracker", href: "/hunt-tracker", icon: Compass },
   { label: "Audit Log", href: "/admin/audit-log", icon: ScrollText },
 ];

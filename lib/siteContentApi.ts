@@ -1,6 +1,6 @@
 "use client";
 
-import { API_ENDPOINTS, type LeaderboardEntry } from "@/lib/api";
+import { API_ENDPOINTS } from "@/lib/api";
 import { getAccessToken } from "@/lib/authPersistence";
 
 export class SiteContentApiError extends Error {}
@@ -43,11 +43,4 @@ export async function saveSiteContent<T>(key: string, value: T): Promise<T> {
     body: JSON.stringify({ data: value }),
   });
   return res.data;
-}
-
-export async function fetchLeaderboard(limit = 20): Promise<LeaderboardEntry[]> {
-  const data = await contentFetch<{ leaderboard: LeaderboardEntry[] }>(`${API_ENDPOINTS.LEADERBOARD}?limit=${limit}`, {
-    cache: "no-store",
-  });
-  return data.leaderboard;
 }

@@ -64,7 +64,12 @@ export const API_ENDPOINTS = {
   SITE_CONTENT_ALL: `${API_URL}/api/site-content`,
   SITE_CONTENT: (key: string) => `${API_URL}/api/site-content/${key}`,
 
-  LEADERBOARD: `${API_URL}/api/leaderboard`,
+  WAGER_LEADERBOARDS: `${API_URL}/api/wager-leaderboard`,
+  WAGER_LEADERBOARD_LIVE: `${API_URL}/api/wager-leaderboard/live`,
+  WAGER_LEADERBOARD: (id: string) => `${API_URL}/api/wager-leaderboard/${id}`,
+  WAGER_LEADERBOARD_ENTRIES: (id: string) => `${API_URL}/api/wager-leaderboard/${id}/entries`,
+  WAGER_LEADERBOARD_ENTRY: (id: string, entryId: string) => `${API_URL}/api/wager-leaderboard/${id}/entries/${entryId}`,
+  WAGER_LEADERBOARD_LIVE_TOGGLE: (id: string) => `${API_URL}/api/wager-leaderboard/${id}/live`,
 
   GIVEAWAYS: `${API_URL}/api/giveaways`,
   GIVEAWAY: (id: string) => `${API_URL}/api/giveaways/${id}`,
@@ -373,13 +378,26 @@ export interface GameContent {
   howToPlay?: string;
 }
 
-export interface LeaderboardEntry {
-  rank: number;
-  userId: string;
-  username: string;
+export interface WagerEntry {
+  id: string;
+  name: string;
+  wagered: number;
   avatarUrl: string | null;
-  coins: number;
-  tier: string;
+}
+
+export interface WagerLeaderboard {
+  id: string;
+  title: string | null;
+  prizeAmount: number;
+  currency: string;
+  /** Explicit title if set, else auto-generated, e.g. "$250 Leaderboard". */
+  displayTitle: string;
+  /** Sorted highest wagered first. */
+  entries: WagerEntry[];
+  isLive: boolean;
+  createdById: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ---------- Stream games: catalog + Chat vs Streamer ----------

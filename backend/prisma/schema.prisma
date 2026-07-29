@@ -53,6 +53,8 @@ model User {
   wonGiveaways     Giveaway[]      @relation("GiveawayWinner")
   giveawayEntries  GiveawayEntry[] @relation("GiveawayEntries")
 
+  createdWagerLeaderboards WagerLeaderboard[]
+
   @@index([kickUsername], map: "idx_users_kick_username")
   @@index([twitchUsername], map: "idx_users_twitch_username")
   @@map("users")
@@ -507,4 +509,27 @@ model GiveawayEntry {
 
   @@unique([giveawayId, userId])
   @@map("giveaway_entries")
+}
+
+/// A manually-tracked wager race — admin types in each player's wagered
+/// total (from the casino's own back-office, there's no live wager API
+/// integration) and the site ranks them. Displayed publicly as
+/// "<prizeAmount> Leaderboard" (e.g. "$250 Leaderboard").
+model WagerLeaderboard {
+  id          String  @id @default(uuid())
+  title       String? // optional override; auto-generated from prizeAmount/currency if unset
+  prizeAmount Decimal @map("prize_amount") @db.Decimal(12, 2)
+  currency    String  @default("USD")
+  /// Array of WagerEntry: { id, name, wagered, avatarUrl }
+  entries     Json    @default("[]")
+  isLive      Boolean @default(false) @map("is_live")
+
+  createdById String @map("created_by_id")
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([isLive], map: "idx_wager_leaderboards_is_live")
+  @@map("wager_leaderboards")
 }
