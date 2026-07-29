@@ -480,8 +480,14 @@ model Giveaway {
   title       String
   description String?
   entryCost   Int            @default(0) @map("entry_cost")
-  status      GiveawayStatus @default(DRAFT)
-  endsAt      DateTime?      @map("ends_at")
+  /// Free-text eligibility rule shown to viewers, e.g. "Must have wagered
+  /// $100+ in the last 7 days to qualify." Not automatically enforced —
+  /// there's no per-user, time-windowed wager history to check against, so
+  /// this is informational; the admin curates who actually qualifies via
+  /// adminAddEntry/adminRemoveEntry.
+  requirementText String?      @map("requirement_text")
+  status          GiveawayStatus @default(DRAFT)
+  endsAt          DateTime?      @map("ends_at")
 
   winnerId String? @map("winner_id")
   winner   User?   @relation("GiveawayWinner", fields: [winnerId], references: [id], onDelete: SetNull)
@@ -499,10 +505,14 @@ model Giveaway {
 }
 
 model GiveawayEntry {
-  id         String   @id @default(uuid())
-  giveawayId String   @map("giveaway_id")
-  userId     String   @map("user_id")
-  enteredAt  DateTime @default(now()) @map("entered_at")
+  id            String   @id @default(uuid())
+  giveawayId    String   @map("giveaway_id")
+  userId        String   @map("user_id")
+  /// True when an admin added this entry directly (e.g. after manually
+  /// confirming they meet a wager requirement) rather than the viewer
+  /// self-entering — admin-added entries are never charged entryCost.
+  addedByAdmin  Boolean  @default(false) @map("added_by_admin")
+  enteredAt     DateTime @default(now()) @map("entered_at")
 
   giveaway Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
   user     User     @relation("GiveawayEntries", fields: [userId], references: [id], onDelete: Cascade)

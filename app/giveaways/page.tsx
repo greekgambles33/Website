@@ -75,6 +75,9 @@ function ActiveGiveawayCard({ giveaway, onChanged }: { giveaway: Giveaway; onCha
               {giveaway._count.entries.toLocaleString()} entries
               {giveaway.entryCost > 0 ? ` · ${giveaway.entryCost.toLocaleString()} HellCatCoins per entry` : " · free entry"}
             </p>
+            {giveaway.requirementText && (
+              <p className="mt-1.5 text-xs font-medium text-gold-400">{giveaway.requirementText}</p>
+            )}
           </div>
         </div>
 

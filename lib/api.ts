@@ -78,6 +78,7 @@ export const API_ENDPOINTS = {
   GIVEAWAY_OPEN: (id: string) => `${API_URL}/api/giveaways/${id}/open`,
   GIVEAWAY_CLOSE: (id: string) => `${API_URL}/api/giveaways/${id}/close`,
   GIVEAWAY_ENTRIES: (id: string) => `${API_URL}/api/giveaways/${id}/entries`,
+  GIVEAWAY_ENTRY: (id: string, entryId: string) => `${API_URL}/api/giveaways/${id}/entries/${entryId}`,
   GIVEAWAY_DRAW: (id: string) => `${API_URL}/api/giveaways/${id}/draw`,
 
   STREAM_GAMES: `${API_URL}/api/stream-games`,
@@ -244,6 +245,7 @@ export interface Giveaway {
   title: string;
   description: string | null;
   entryCost: number;
+  requirementText: string | null;
   status: GiveawayStatus;
   endsAt: string | null;
   winnerId: string | null;
@@ -260,6 +262,7 @@ export interface GiveawayEntry {
   id: string;
   giveawayId: string;
   userId: string;
+  addedByAdmin: boolean;
   enteredAt: string;
   user: GiveawayUserRef;
 }

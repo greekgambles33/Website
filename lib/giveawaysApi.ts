@@ -57,6 +57,7 @@ export async function createGiveaway(input: {
   title: string;
   description?: string | null;
   entryCost?: number;
+  requirementText?: string | null;
   endsAt?: string | null;
 }): Promise<Giveaway> {
   const data = await giveawayFetch<{ giveaway: Giveaway }>(API_ENDPOINTS.GIVEAWAYS, {
@@ -68,7 +69,13 @@ export async function createGiveaway(input: {
 
 export async function updateGiveaway(
   id: string,
-  patch: Partial<{ title: string; description: string | null; entryCost: number; endsAt: string | null }>
+  patch: Partial<{
+    title: string;
+    description: string | null;
+    entryCost: number;
+    requirementText: string | null;
+    endsAt: string | null;
+  }>
 ): Promise<Giveaway> {
   const data = await giveawayFetch<{ giveaway: Giveaway }>(API_ENDPOINTS.GIVEAWAY(id), {
     method: "PUT",
@@ -99,4 +106,12 @@ export async function fetchGiveawayEntries(id: string): Promise<GiveawayEntry[]>
 export async function drawGiveawayWinner(id: string): Promise<Giveaway> {
   const data = await giveawayFetch<{ giveaway: Giveaway }>(API_ENDPOINTS.GIVEAWAY_DRAW(id), { method: "POST" });
   return data.giveaway;
+}
+
+export async function adminAddGiveawayEntry(id: string, userId: string): Promise<void> {
+  await giveawayFetch(API_ENDPOINTS.GIVEAWAY_ENTRIES(id), { method: "POST", body: JSON.stringify({ userId }) });
+}
+
+export async function adminRemoveGiveawayEntry(id: string, entryId: string): Promise<void> {
+  await giveawayFetch(API_ENDPOINTS.GIVEAWAY_ENTRY(id, entryId), { method: "DELETE" });
 }

@@ -13,10 +13,13 @@ const createSchema = z.object({
   title: z.string().min(1).max(200),
   description: z.string().max(1000).optional().nullable(),
   entryCost: z.number().int().nonnegative().optional(),
+  requirementText: z.string().max(500).optional().nullable(),
   endsAt: z.string().optional().nullable(),
 });
 
 const updateSchema = createSchema.partial();
+
+const adminAddEntrySchema = z.object({ userId: z.string().min(1) });
 
 export const GiveawayController = {
   list: asyncHandler(async (_req: Request, res: Response) => {
@@ -79,5 +82,16 @@ export const GiveawayController = {
   drawWinner: asyncHandler(async (req: Request, res: Response) => {
     const giveaway = await GiveawayService.drawWinner(req.params.id);
     res.json({ success: true, giveaway });
+  }),
+
+  adminAddEntry: asyncHandler(async (req: Request, res: Response) => {
+    const { userId } = parseBody(adminAddEntrySchema, req.body);
+    await GiveawayService.adminAddEntry(req.params.id, userId);
+    res.json({ success: true });
+  }),
+
+  adminRemoveEntry: asyncHandler(async (req: Request, res: Response) => {
+    await GiveawayService.adminRemoveEntry(req.params.id, req.params.entryId);
+    res.json({ success: true });
   }),
 };

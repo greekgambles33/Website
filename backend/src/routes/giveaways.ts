@@ -23,5 +23,7 @@ router.post("/:id/open", GiveawayController.open);
 router.post("/:id/close", GiveawayController.close);
 router.get("/:id/entries", GiveawayController.listEntries);
 router.post("/:id/draw", GiveawayController.drawWinner);
+router.post("/:id/entries", GiveawayController.adminAddEntry);
+router.delete("/:id/entries/:entryId", GiveawayController.adminRemoveEntry);
 
 export default router;

@@ -28,13 +28,20 @@ export class GiveawayService {
 
   static async create(
     userId: string,
-    data: { title: string; description?: string | null; entryCost?: number; endsAt?: string | null }
+    data: {
+      title: string;
+      description?: string | null;
+      entryCost?: number;
+      requirementText?: string | null;
+      endsAt?: string | null;
+    }
   ): Promise<Giveaway> {
     return prisma.giveaway.create({
       data: {
         title: data.title,
         description: data.description ?? null,
         entryCost: data.entryCost ?? 0,
+        requirementText: data.requirementText ?? null,
         endsAt: data.endsAt ? new Date(data.endsAt) : null,
         createdById: userId,
       },
@@ -43,7 +50,13 @@ export class GiveawayService {
 
   static async update(
     id: string,
-    data: Partial<{ title: string; description: string | null; entryCost: number; endsAt: string | null }>
+    data: Partial<{
+      title: string;
+      description: string | null;
+      entryCost: number;
+      requirementText: string | null;
+      endsAt: string | null;
+    }>
   ): Promise<Giveaway> {
     const giveaway = await loadOrThrow(id);
     if (giveaway.status !== GiveawayStatus.DRAFT) {
@@ -120,6 +133,45 @@ export class GiveawayService {
       if (giveaway.entryCost > 0) {
         await tx.user.update({
           where: { id: userId },
+          data: { catCoinBalance: { increment: giveaway.entryCost }, totalSpent: { decrement: giveaway.entryCost } },
+        });
+      }
+      await tx.giveawayEntry.delete({ where: { id: entry.id } });
+    });
+  }
+
+  /** Admin adding someone directly (e.g. after manually confirming a wager
+   * requirement) — never charges entryCost, works any time before a winner
+   * has been drawn regardless of whether entries are open or closed. */
+  static async adminAddEntry(id: string, userId: string): Promise<void> {
+    const giveaway = await loadOrThrow(id);
+    if (giveaway.status === GiveawayStatus.COMPLETED) {
+      throw createError.badRequest("A winner has already been drawn — can't add more entries");
+    }
+
+    const existing = await prisma.giveawayEntry.findUnique({
+      where: { giveawayId_userId: { giveawayId: id, userId } },
+    });
+    if (existing) throw createError.conflict("This user is already entered");
+
+    await prisma.giveawayEntry.create({ data: { giveawayId: id, userId, addedByAdmin: true } });
+  }
+
+  /** Admin removing a specific entry (e.g. they didn't actually meet a
+   * requirement) — refunds entryCost only if it was a paid self-entry. */
+  static async adminRemoveEntry(id: string, entryId: string): Promise<void> {
+    const giveaway = await loadOrThrow(id);
+    if (giveaway.status === GiveawayStatus.COMPLETED) {
+      throw createError.badRequest("A winner has already been drawn — entries are locked");
+    }
+
+    const entry = await prisma.giveawayEntry.findFirst({ where: { id: entryId, giveawayId: id } });
+    if (!entry) throw createError.notFound("Entry not found");
+
+    await prisma.$transaction(async (tx) => {
+      if (!entry.addedByAdmin && giveaway.entryCost > 0) {
+        await tx.user.update({
+          where: { id: entry.userId },
           data: { catCoinBalance: { increment: giveaway.entryCost }, totalSpent: { decrement: giveaway.entryCost } },
         });
       }
