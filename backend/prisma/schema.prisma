@@ -533,6 +533,7 @@ model WagerLeaderboard {
   /// Array of WagerEntry: { id, name, wagered, avatarUrl }
   entries     Json    @default("[]")
   isLive      Boolean @default(false) @map("is_live")
+  endsAt      DateTime? @map("ends_at")
 
   createdById String @map("created_by_id")
   createdBy   User   @relation(fields: [createdById], references: [id])

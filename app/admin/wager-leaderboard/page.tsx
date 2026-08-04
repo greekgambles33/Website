@@ -9,6 +9,7 @@ import { formatCurrency } from "@/lib/utils";
 import {
   fetchWagerLeaderboards,
   createWagerLeaderboard,
+  updateWagerLeaderboard,
   deleteWagerLeaderboard,
   addWagerEntry,
   editWagerEntry,
@@ -19,16 +20,26 @@ import {
 } from "@/lib/wagerLeaderboardApi";
 import type { WagerLeaderboard, WagerEntry } from "@/lib/api";
 
+function toDatetimeLocalValue(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export default function AdminWagerLeaderboardPage() {
   const [boards, setBoards] = useState<WagerLeaderboard[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [editingEndsAtId, setEditingEndsAtId] = useState<string | null>(null);
+  const [endsAtDraft, setEndsAtDraft] = useState("");
 
   const [title, setTitle] = useState("");
   const [prizeAmount, setPrizeAmount] = useState("");
   const [currency, setCurrency] = useState("USD");
+  const [endsAt, setEndsAt] = useState("");
 
   const load = useCallback(async () => {
     try {
@@ -59,17 +70,30 @@ export default function AdminWagerLeaderboardPage() {
     if (!Number.isFinite(amount) || amount < 0) return alert("Enter a valid prize amount");
     setBusy(true);
     try {
-      await createWagerLeaderboard({ title: title || null, prizeAmount: amount, currency });
+      await createWagerLeaderboard({
+        title: title || null,
+        prizeAmount: amount,
+        currency,
+        endsAt: endsAt ? new Date(endsAt).toISOString() : null,
+      });
       setShowCreate(false);
       setTitle("");
       setPrizeAmount("");
       setCurrency("USD");
+      setEndsAt("");
       await load();
     } catch (err) {
       alert(err instanceof WagerLeaderboardApiError ? err.message : "Failed to create");
     } finally {
       setBusy(false);
     }
+  };
+
+  const handleSaveEndsAt = async (board: WagerLeaderboard) => {
+    await runAction(() =>
+      updateWagerLeaderboard(board.id, { endsAt: endsAtDraft ? new Date(endsAtDraft).toISOString() : null })
+    );
+    setEditingEndsAtId(null);
   };
 
   return (
@@ -100,6 +124,17 @@ export default function AdminWagerLeaderboardPage() {
                 Title Override (optional)
               </label>
               <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Auto: $250 Leaderboard" className="ggb-input mt-1" />
+            </div>
+            <div>
+              <label className="font-heading text-xs font-semibold uppercase tracking-widest text-ash-300">
+                Ends At (optional)
+              </label>
+              <input
+                type="datetime-local"
+                value={endsAt}
+                onChange={(e) => setEndsAt(e.target.value)}
+                className="ggb-input mt-1"
+              />
             </div>
           </div>
           <div className="mt-4 flex gap-2">
@@ -134,6 +169,35 @@ export default function AdminWagerLeaderboardPage() {
                     <h3 className="font-heading text-sm font-bold text-white">{board.displayTitle}</h3>
                   </div>
                   <p className="mt-1.5 text-xs text-ash-400">{board.entries.length} entries</p>
+
+                  {editingEndsAtId === board.id ? (
+                    <div className="mt-2 flex items-center gap-1.5">
+                      <input
+                        type="datetime-local"
+                        autoFocus
+                        value={endsAtDraft}
+                        onChange={(e) => setEndsAtDraft(e.target.value)}
+                        className="ggb-input w-56 py-1 text-xs"
+                      />
+                      <Button size="sm" disabled={busy} onClick={() => handleSaveEndsAt(board)}>
+                        Save
+                      </Button>
+                      <Button size="sm" variant="secondary" onClick={() => setEditingEndsAtId(null)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setEditingEndsAtId(board.id);
+                        setEndsAtDraft(toDatetimeLocalValue(board.endsAt));
+                      }}
+                      className="font-heading mt-2 flex items-center gap-1 text-xs text-ash-400 hover:text-white"
+                    >
+                      <Pencil size={11} />
+                      {board.endsAt ? `Ends ${new Date(board.endsAt).toLocaleString()}` : "Set countdown end time"}
+                    </button>
+                  )}
                 </div>
                 <div className="flex items-center gap-1">
                   {board.isLive ? (

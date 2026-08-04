@@ -398,6 +398,7 @@ export interface WagerLeaderboard {
   /** Sorted highest wagered first. */
   entries: WagerEntry[];
   isLive: boolean;
+  endsAt: string | null;
   createdById: string;
   createdAt: string;
   updatedAt: string;

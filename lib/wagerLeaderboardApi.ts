@@ -49,6 +49,7 @@ export async function createWagerLeaderboard(input: {
   title?: string | null;
   prizeAmount: number;
   currency?: string;
+  endsAt?: string | null;
 }): Promise<WagerLeaderboard> {
   const data = await wagerFetch<{ leaderboard: WagerLeaderboard }>(API_ENDPOINTS.WAGER_LEADERBOARDS, {
     method: "POST",
@@ -59,7 +60,7 @@ export async function createWagerLeaderboard(input: {
 
 export async function updateWagerLeaderboard(
   id: string,
-  patch: Partial<{ title: string | null; prizeAmount: number; currency: string }>
+  patch: Partial<{ title: string | null; prizeAmount: number; currency: string; endsAt: string | null }>
 ): Promise<WagerLeaderboard> {
   const data = await wagerFetch<{ leaderboard: WagerLeaderboard }>(API_ENDPOINTS.WAGER_LEADERBOARD(id), {
     method: "PUT",

@@ -11,6 +11,53 @@ import type { WagerLeaderboard } from "@/lib/api";
 
 const rankColors = ["text-gold-400", "text-ash-100", "text-lava-400"];
 
+function getTimeLeft(endsAt: string) {
+  const diff = new Date(endsAt).getTime() - Date.now();
+  const total = Math.max(0, diff);
+  return {
+    ended: diff <= 0,
+    days: Math.floor(total / 86_400_000),
+    hours: Math.floor((total % 86_400_000) / 3_600_000),
+    minutes: Math.floor((total % 3_600_000) / 60_000),
+    seconds: Math.floor((total % 60_000) / 1000),
+  };
+}
+
+function Countdown({ endsAt }: { endsAt: string }) {
+  const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(endsAt));
+
+  useEffect(() => {
+    const id = setInterval(() => setTimeLeft(getTimeLeft(endsAt)), 1000);
+    return () => clearInterval(id);
+  }, [endsAt]);
+
+  if (timeLeft.ended) {
+    return <p className="mt-6 text-center text-sm font-semibold text-ash-400">Race has ended</p>;
+  }
+
+  const units = [
+    { label: "Days", value: timeLeft.days },
+    { label: "Hours", value: timeLeft.hours },
+    { label: "Min", value: timeLeft.minutes },
+    { label: "Sec", value: timeLeft.seconds },
+  ];
+
+  return (
+    <div className="mx-auto mt-6 flex max-w-md items-center justify-center gap-3">
+      {units.map((unit) => (
+        <div key={unit.label} className="flex flex-col items-center rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 min-w-[64px]">
+          <span className="font-display text-2xl font-bold text-white tabular-nums">
+            {String(unit.value).padStart(2, "0")}
+          </span>
+          <span className="font-heading text-[10px] font-semibold uppercase tracking-widest text-ash-400">
+            {unit.label}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function LeaderboardPage() {
   const [board, setBoard] = useState<WagerLeaderboard | null | undefined>(undefined);
 
@@ -27,6 +74,8 @@ export default function LeaderboardPage() {
         title={board ? board.displayTitle : "Leaderboard"}
         description="Ranked by how much you've wagered — top of the board takes the prize."
       />
+
+      {board?.endsAt && <Countdown endsAt={board.endsAt} />}
 
       {board === undefined ? (
         <p className="mt-12 text-center text-sm text-ash-400">Loading…</p>

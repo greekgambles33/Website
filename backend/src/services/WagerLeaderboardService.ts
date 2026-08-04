@@ -10,9 +10,10 @@ export interface WagerEntry {
   avatarUrl: string | null;
 }
 
-export interface SerializedWagerLeaderboard extends Omit<WagerLeaderboard, "prizeAmount" | "entries"> {
+export interface SerializedWagerLeaderboard extends Omit<WagerLeaderboard, "prizeAmount" | "entries" | "endsAt"> {
   prizeAmount: number;
   entries: WagerEntry[];
+  endsAt: string | null;
   /** Explicit title if set, else auto-generated from prizeAmount/currency,
    * e.g. "$250 Leaderboard". */
   displayTitle: string;
@@ -37,6 +38,7 @@ export function serializeWagerLeaderboard(board: WagerLeaderboard): SerializedWa
     ...board,
     prizeAmount,
     entries,
+    endsAt: board.endsAt ? board.endsAt.toISOString() : null,
     displayTitle: board.title?.trim() || `${formatPrize(prizeAmount, board.currency)} Leaderboard`,
   };
 }
@@ -62,7 +64,7 @@ export class WagerLeaderboardService {
 
   static async create(
     userId: string,
-    data: { title?: string | null; prizeAmount: number; currency?: string }
+    data: { title?: string | null; prizeAmount: number; currency?: string; endsAt?: string | null }
   ): Promise<WagerLeaderboard> {
     if (typeof data.prizeAmount !== "number" || !Number.isFinite(data.prizeAmount) || data.prizeAmount < 0) {
       throw createError.badRequest("prizeAmount must be a non-negative number");
@@ -72,6 +74,7 @@ export class WagerLeaderboardService {
         title: data.title?.trim() || null,
         prizeAmount: data.prizeAmount,
         currency: data.currency?.trim() || "USD",
+        endsAt: data.endsAt ? new Date(data.endsAt) : null,
         createdById: userId,
       },
     });
@@ -79,7 +82,7 @@ export class WagerLeaderboardService {
 
   static async update(
     id: string,
-    data: Partial<{ title: string | null; prizeAmount: number; currency: string }>
+    data: Partial<{ title: string | null; prizeAmount: number; currency: string; endsAt: string | null }>
   ): Promise<WagerLeaderboard> {
     await this.get(id);
     if (data.prizeAmount !== undefined && (!Number.isFinite(data.prizeAmount) || data.prizeAmount < 0)) {
@@ -91,6 +94,7 @@ export class WagerLeaderboardService {
         ...(data.title !== undefined ? { title: data.title?.trim() || null } : {}),
         ...(data.prizeAmount !== undefined ? { prizeAmount: data.prizeAmount } : {}),
         ...(data.currency !== undefined ? { currency: data.currency.trim() || "USD" } : {}),
+        ...(data.endsAt !== undefined ? { endsAt: data.endsAt ? new Date(data.endsAt) : null } : {}),
       },
     });
   }

@@ -13,6 +13,7 @@ const createSchema = z.object({
   title: z.string().max(120).optional().nullable(),
   prizeAmount: z.number().nonnegative(),
   currency: z.string().min(1).max(8).optional(),
+  endsAt: z.string().datetime().optional().nullable(),
 });
 
 const updateSchema = createSchema.partial();
