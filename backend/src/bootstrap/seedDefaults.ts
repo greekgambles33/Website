@@ -63,6 +63,12 @@ const DEFAULT_STREAM_GAMES = [
     description: "One climber, six rungs, 250 to 2,000 points. Predict every challenge with !climb pass / !climb fail.",
     sortOrder: 3,
   },
+  {
+    slug: "bonus-bingo",
+    name: "Bonus Bingo",
+    description: "Join with !join in chat, get drawn for a square, pick your bonus buy — profit turns it green. Complete a line to win.",
+    sortOrder: 4,
+  },
 ];
 
 async function seedStreamGames(): Promise<void> {

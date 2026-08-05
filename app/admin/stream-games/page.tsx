@@ -16,7 +16,7 @@ import {
 import type { StreamGame } from "@/lib/api";
 
 // Stream games with a dedicated live control panel under /admin/stream-games/[slug].
-const GAMES_WITH_CONTROL_PANEL = new Set(["chat-vs-streamer", "climb-the-ladder"]);
+const GAMES_WITH_CONTROL_PANEL = new Set(["chat-vs-streamer", "climb-the-ladder", "bonus-bingo"]);
 
 // Games with their own pre-existing standalone pages link straight there
 // instead of the generic /stream-games/[slug] and control-panel routes.

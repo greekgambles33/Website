@@ -8,6 +8,7 @@ import {
   type PredictionUserStats,
   type LadderLevel,
   type LadderRun,
+  type BingoGame,
 } from "@/lib/api";
 import { getAccessToken } from "@/lib/authPersistence";
 
@@ -236,4 +237,114 @@ export async function cashOutLadderRun(runId: string): Promise<LadderRun> {
 export async function climbLadderHigher(runId: string): Promise<LadderRun> {
   const data = await streamGameFetch<{ run: LadderRun }>(API_ENDPOINTS.LADDER_RUN_CLIMB(runId), { method: "POST" });
   return data.run;
+}
+
+// ---------- Bonus Bingo: public reads ----------
+
+export async function fetchBingoGames(slug: string): Promise<BingoGame[]> {
+  const data = await streamGameFetch<{ games: BingoGame[] }>(API_ENDPOINTS.BINGO_GAMES(slug), { cache: "no-store" });
+  return data.games;
+}
+
+export async function fetchActiveBingoGame(slug: string): Promise<BingoGame | null> {
+  const data = await streamGameFetch<{ game: BingoGame | null }>(API_ENDPOINTS.BINGO_ACTIVE_GAME(slug), { cache: "no-store" });
+  return data.game;
+}
+
+export async function fetchBingoGame(id: string): Promise<BingoGame> {
+  const data = await streamGameFetch<{ game: BingoGame }>(API_ENDPOINTS.BINGO_GAME(id), { cache: "no-store" });
+  return data.game;
+}
+
+// ---------- Bonus Bingo: moderator/admin control panel ----------
+
+export async function createBingoGame(
+  slug: string,
+  input: { title: string; gridSize?: 3 | 4 | 5; linePoints?: number; keyword?: string }
+): Promise<BingoGame> {
+  const data = await streamGameFetch<{ game: BingoGame }>(API_ENDPOINTS.BINGO_GAMES(slug), {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return data.game;
+}
+
+export async function setBingoKeyword(id: string, keyword: string): Promise<BingoGame> {
+  const data = await streamGameFetch<{ game: BingoGame }>(API_ENDPOINTS.BINGO_GAME_KEYWORD(id), {
+    method: "POST",
+    body: JSON.stringify({ keyword }),
+  });
+  return data.game;
+}
+
+export async function openBingoRegistration(id: string): Promise<BingoGame> {
+  const data = await streamGameFetch<{ game: BingoGame }>(API_ENDPOINTS.BINGO_GAME_OPEN_REGISTRATION(id), { method: "POST" });
+  return data.game;
+}
+
+export async function startBingoGame(id: string): Promise<BingoGame> {
+  const data = await streamGameFetch<{ game: BingoGame }>(API_ENDPOINTS.BINGO_GAME_START(id), { method: "POST" });
+  return data.game;
+}
+
+export async function spinBingoCell(id: string): Promise<BingoGame> {
+  const data = await streamGameFetch<{ game: BingoGame }>(API_ENDPOINTS.BINGO_GAME_SPIN(id), { method: "POST" });
+  return data.game;
+}
+
+export async function drawBingoPlayer(id: string, includeWinners: boolean): Promise<BingoGame> {
+  const data = await streamGameFetch<{ game: BingoGame }>(API_ENDPOINTS.BINGO_GAME_DRAW(id), {
+    method: "POST",
+    body: JSON.stringify({ includeWinners }),
+  });
+  return data.game;
+}
+
+export async function setBingoCellSlot(id: string, cellId: string, slotName: string): Promise<BingoGame> {
+  const data = await streamGameFetch<{ game: BingoGame }>(API_ENDPOINTS.BINGO_CELL_SLOT(id, cellId), {
+    method: "POST",
+    body: JSON.stringify({ slotName }),
+  });
+  return data.game;
+}
+
+export async function markBingoResult(id: string, won: boolean): Promise<{ game: BingoGame; newLineWins: BingoGame["lineWins"] }> {
+  return streamGameFetch<{ game: BingoGame; newLineWins: BingoGame["lineWins"] }>(API_ENDPOINTS.BINGO_GAME_RESULT(id), {
+    method: "POST",
+    body: JSON.stringify({ won }),
+  });
+}
+
+export async function completeBingoGame(id: string): Promise<BingoGame> {
+  const data = await streamGameFetch<{ game: BingoGame }>(API_ENDPOINTS.BINGO_GAME_COMPLETE(id), { method: "POST" });
+  return data.game;
+}
+
+export async function unliveBingoGame(id: string): Promise<BingoGame> {
+  const data = await streamGameFetch<{ game: BingoGame }>(API_ENDPOINTS.BINGO_GAME_UNLIVE(id), { method: "POST" });
+  return data.game;
+}
+
+export async function cancelBingoGame(id: string): Promise<BingoGame> {
+  const data = await streamGameFetch<{ game: BingoGame }>(API_ENDPOINTS.BINGO_GAME_CANCEL(id), { method: "POST" });
+  return data.game;
+}
+
+export async function deleteBingoGame(id: string): Promise<void> {
+  await streamGameFetch(API_ENDPOINTS.BINGO_GAME(id), { method: "DELETE" });
+}
+
+export async function addBingoParticipant(id: string, chatUsername: string, preferredSlot?: string | null): Promise<BingoGame> {
+  const data = await streamGameFetch<{ game: BingoGame }>(API_ENDPOINTS.BINGO_GAME_PARTICIPANTS(id), {
+    method: "POST",
+    body: JSON.stringify({ chatUsername, preferredSlot }),
+  });
+  return data.game;
+}
+
+export async function removeBingoParticipant(id: string, chatUsername: string): Promise<BingoGame> {
+  const data = await streamGameFetch<{ game: BingoGame }>(API_ENDPOINTS.BINGO_GAME_PARTICIPANT(id, chatUsername), {
+    method: "DELETE",
+  });
+  return data.game;
 }

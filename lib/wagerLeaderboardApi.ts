@@ -1,6 +1,6 @@
 "use client";
 
-import { API_ENDPOINTS, type WagerLeaderboard } from "@/lib/api";
+import { API_ENDPOINTS, type WagerLeaderboard, type WagerPrizeTier } from "@/lib/api";
 import { getAccessToken } from "@/lib/authPersistence";
 
 export class WagerLeaderboardApiError extends Error {}
@@ -40,6 +40,11 @@ export async function fetchWagerLeaderboards(): Promise<WagerLeaderboard[]> {
   return data.leaderboards;
 }
 
+export async function fetchArchivedWagerLeaderboards(): Promise<WagerLeaderboard[]> {
+  const data = await wagerFetch<{ leaderboards: WagerLeaderboard[] }>(API_ENDPOINTS.WAGER_LEADERBOARD_ARCHIVED);
+  return data.leaderboards;
+}
+
 export async function fetchWagerLeaderboard(id: string): Promise<WagerLeaderboard> {
   const data = await wagerFetch<{ leaderboard: WagerLeaderboard }>(API_ENDPOINTS.WAGER_LEADERBOARD(id));
   return data.leaderboard;
@@ -49,6 +54,9 @@ export async function createWagerLeaderboard(input: {
   title?: string | null;
   prizeAmount: number;
   currency?: string;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  prizeDistribution?: WagerPrizeTier[] | null;
 }): Promise<WagerLeaderboard> {
   const data = await wagerFetch<{ leaderboard: WagerLeaderboard }>(API_ENDPOINTS.WAGER_LEADERBOARDS, {
     method: "POST",
@@ -59,7 +67,14 @@ export async function createWagerLeaderboard(input: {
 
 export async function updateWagerLeaderboard(
   id: string,
-  patch: Partial<{ title: string | null; prizeAmount: number; currency: string }>
+  patch: Partial<{
+    title: string | null;
+    prizeAmount: number;
+    currency: string;
+    startsAt: string | null;
+    endsAt: string | null;
+    prizeDistribution: WagerPrizeTier[] | null;
+  }>
 ): Promise<WagerLeaderboard> {
   const data = await wagerFetch<{ leaderboard: WagerLeaderboard }>(API_ENDPOINTS.WAGER_LEADERBOARD(id), {
     method: "PUT",
@@ -112,6 +127,13 @@ export async function setWagerLeaderboardLive(id: string): Promise<WagerLeaderbo
 export async function unsetWagerLeaderboardLive(id: string): Promise<WagerLeaderboard> {
   const data = await wagerFetch<{ leaderboard: WagerLeaderboard }>(API_ENDPOINTS.WAGER_LEADERBOARD_LIVE_TOGGLE(id), {
     method: "DELETE",
+  });
+  return data.leaderboard;
+}
+
+export async function archiveWagerLeaderboard(id: string): Promise<WagerLeaderboard> {
+  const data = await wagerFetch<{ leaderboard: WagerLeaderboard }>(API_ENDPOINTS.WAGER_LEADERBOARD_ARCHIVE(id), {
+    method: "POST",
   });
   return data.leaderboard;
 }

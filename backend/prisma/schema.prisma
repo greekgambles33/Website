@@ -55,6 +55,10 @@ model User {
 
   createdWagerLeaderboards WagerLeaderboard[]
 
+  createdBingoBoards BonusBingo[]       @relation("BingoCreator")
+  bingoParticipation BingoParticipant[] @relation("BingoParticipant")
+  claimedBingoCells  BingoCell[]        @relation("BingoCellClaimer")
+
   @@index([kickUsername], map: "idx_users_kick_username")
   @@index([twitchUsername], map: "idx_users_twitch_username")
   @@map("users")
@@ -305,6 +309,7 @@ model StreamGame {
 
   predictionMatches PredictionMatch[]
   ladderRuns        LadderRun[]
+  bingoBoards       BonusBingo[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -533,6 +538,15 @@ model WagerLeaderboard {
   /// Array of WagerEntry: { id, name, wagered, avatarUrl }
   entries     Json    @default("[]")
   isLive      Boolean @default(false) @map("is_live")
+  startsAt    DateTime? @map("starts_at")
+  endsAt      DateTime? @map("ends_at")
+  /// Optional per-rank payout, e.g. [{ rank: 1, amount: 150 }, { rank: 2, amount: 75 }].
+  /// Falls back to "winner takes all" of prizeAmount when unset.
+  prizeDistribution Json?     @map("prize_distribution")
+  archivedAt        DateTime? @map("archived_at")
+  /// Snapshot of ranked entries + payout taken when the board is archived:
+  /// { rank, name, avatarUrl, wagered, prizeAmount }[]
+  winners           Json      @default("[]")
 
   createdById String @map("created_by_id")
   createdBy   User   @relation(fields: [createdById], references: [id])
@@ -541,5 +555,108 @@ model WagerLeaderboard {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([isLive], map: "idx_wager_leaderboards_is_live")
+  @@index([archivedAt], map: "idx_wager_leaderboards_archived_at")
   @@map("wager_leaderboards")
+}
+
+// ─── Bonus Bingo ────────────────────────────────────────────────────────────
+
+enum BingoStatus {
+  DRAFT
+  REGISTRATION
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum BingoCellStatus {
+  EMPTY
+  ACTIVE
+  GREEN
+}
+
+model BonusBingo {
+  id           String      @id @default(uuid())
+  streamGameId String      @map("stream_game_id")
+  title        String
+  /// Chat command that joins this game, e.g. "!join" — optionally followed
+  /// by a slot name ("!join sweet bonanza") used as a default slot pre-fill.
+  keyword      String      @default("!join")
+  gridSize     Int         @default(5) @map("grid_size")
+  linePoints   Int         @default(500) @map("line_points")
+  status       BingoStatus @default(DRAFT)
+
+  currentCellId       String? @map("current_cell_id")
+  currentChatUsername String? @map("current_chat_username")
+
+  createdById String     @map("created_by_id")
+  createdBy   User       @relation("BingoCreator", fields: [createdById], references: [id])
+  streamGame  StreamGame @relation(fields: [streamGameId], references: [id])
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  completedAt DateTime? @map("completed_at")
+
+  cells        BingoCell[]
+  participants BingoParticipant[]
+  lineWins     BingoLineWin[]
+
+  @@index([streamGameId, status], map: "idx_bonus_bingo_stream_game_status")
+  @@map("bonus_bingo")
+}
+
+model BingoCell {
+  id     String          @id @default(uuid())
+  gameId String          @map("game_id")
+  row    Int
+  col    Int
+  status BingoCellStatus @default(EMPTY)
+  /// The slot/bonus buy chosen for this cell's turn — set by the drawn
+  /// player (website or "!slot <name>" in chat) or the admin.
+  slotName              String?   @map("slot_name")
+  claimedByChatUsername String?   @map("claimed_by_chat_username")
+  claimedByUserId       String?   @map("claimed_by_user_id")
+  claimedAt             DateTime? @map("claimed_at")
+
+  game      BonusBingo @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  claimedBy User?      @relation("BingoCellClaimer", fields: [claimedByUserId], references: [id], onDelete: SetNull)
+
+  @@unique([gameId, row, col])
+  @@map("bingo_cells")
+}
+
+/// A viewer joins via "!join" (or the game's configured keyword) in Twitch/Kick
+/// chat — chatUsername is always set; userId is only filled in when that chat
+/// username matches a verified linked account, so unlinked chatters can still play.
+model BingoParticipant {
+  id            String   @id @default(uuid())
+  gameId        String   @map("game_id")
+  chatUsername  String   @map("chat_username")
+  userId        String?  @map("user_id")
+  /// Default slot applied to each cell they're drawn for, from "!join <slot>"
+  /// or a later "!slot <name>" — always overridable per-draw, not a commitment.
+  preferredSlot String?  @map("preferred_slot")
+  joinedAt      DateTime @default(now()) @map("joined_at")
+
+  game BonusBingo @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user User?      @relation("BingoParticipant", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@unique([gameId, chatUsername])
+  @@map("bingo_participants")
+}
+
+model BingoLineWin {
+  id         String @id @default(uuid())
+  gameId     String @map("game_id")
+  lineType   String @map("line_type")
+  lineIndex  Int    @map("line_index")
+  pointsEach Int    @map("points_each")
+  /// Display names credited for this line at the time it completed.
+  winners     Json     @default("[]")
+  completedAt DateTime @default(now()) @map("completed_at")
+
+  game BonusBingo @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, lineType, lineIndex])
+  @@map("bingo_line_wins")
 }

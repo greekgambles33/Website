@@ -6,6 +6,8 @@ const router = Router();
 
 // Public — anyone can view the live wager leaderboard.
 router.get("/live", WagerLeaderboardController.getLive);
+// Must be registered before the "/:id" catch-all below, or "archived" would be read as an id.
+router.get("/archived", authMiddleware, adminMiddleware, WagerLeaderboardController.listArchived);
 router.get("/:id", WagerLeaderboardController.get);
 
 // Admin — this is manually curated from casino back-office data.
@@ -22,5 +24,6 @@ router.delete("/:id/entries/:entryId", WagerLeaderboardController.removeEntry);
 
 router.post("/:id/live", WagerLeaderboardController.setLive);
 router.delete("/:id/live", WagerLeaderboardController.unsetLive);
+router.post("/:id/archive", WagerLeaderboardController.archive);
 
 export default router;

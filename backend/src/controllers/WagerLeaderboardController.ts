@@ -9,10 +9,18 @@ function parseBody<T>(schema: z.ZodType<T>, body: unknown): T {
   return result.data;
 }
 
+const prizeTierSchema = z.object({
+  rank: z.number().int().min(1),
+  amount: z.number().nonnegative(),
+});
+
 const createSchema = z.object({
   title: z.string().max(120).optional().nullable(),
   prizeAmount: z.number().nonnegative(),
   currency: z.string().min(1).max(8).optional(),
+  startsAt: z.string().datetime().optional().nullable(),
+  endsAt: z.string().datetime().optional().nullable(),
+  prizeDistribution: z.array(prizeTierSchema).max(20).optional().nullable(),
 });
 
 const updateSchema = createSchema.partial();
@@ -28,6 +36,11 @@ const editEntrySchema = addEntrySchema.partial();
 export const WagerLeaderboardController = {
   list: asyncHandler(async (_req: Request, res: Response) => {
     const boards = await WagerLeaderboardService.list();
+    res.json({ success: true, leaderboards: boards.map(serializeWagerLeaderboard) });
+  }),
+
+  listArchived: asyncHandler(async (_req: Request, res: Response) => {
+    const boards = await WagerLeaderboardService.listArchived();
     res.json({ success: true, leaderboards: boards.map(serializeWagerLeaderboard) });
   }),
 
@@ -82,6 +95,11 @@ export const WagerLeaderboardController = {
 
   unsetLive: asyncHandler(async (req: Request, res: Response) => {
     const board = await WagerLeaderboardService.unsetLive(req.params.id);
+    res.json({ success: true, leaderboard: serializeWagerLeaderboard(board) });
+  }),
+
+  archive: asyncHandler(async (req: Request, res: Response) => {
+    const board = await WagerLeaderboardService.archive(req.params.id);
     res.json({ success: true, leaderboard: serializeWagerLeaderboard(board) });
   }),
 };
