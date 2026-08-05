@@ -1,4 +1,4 @@
-import { PredictionMatchStatus, LadderRunStatus, TournamentStatus, type StreamGame } from "@prisma/client";
+import { PredictionMatchStatus, LadderRunStatus, TournamentStatus, BingoStatus, type StreamGame } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { createError } from "@/middleware/errorHandler";
 
@@ -42,6 +42,13 @@ async function computeIsLive(game: StreamGame): Promise<boolean> {
         select: { id: true },
       });
       return !!run;
+    }
+    case "bonus-bingo": {
+      const board = await prisma.bonusBingo.findFirst({
+        where: { streamGameId: game.id, status: BingoStatus.ACTIVE },
+        select: { id: true },
+      });
+      return !!board;
     }
     default:
       return false;

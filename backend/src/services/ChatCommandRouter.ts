@@ -3,6 +3,7 @@ import { handlePredictionCommand } from "@/services/PredictionChatCommands";
 import { handleLadderCommand } from "@/services/LadderChatCommands";
 import { handleTournamentCommand } from "@/services/TournamentChatCommands";
 import { handleHuntSuggestion, handleGuessCommand } from "@/services/HuntChatCommands";
+import { handleBingoCommand } from "@/services/BingoChatCommands";
 
 /** Single entry point both chat bots call — tries each stream game's command
  * parser in turn. Add new games' command handlers here as they're built.
@@ -26,6 +27,9 @@ export async function routeChatCommand(
 
   const guessReply = await handleGuessCommand(text, chatUsername, source);
   if (guessReply !== null) return guessReply;
+
+  const bingoReply = await handleBingoCommand(text, chatUsername, source);
+  if (bingoReply !== null) return bingoReply;
 
   return handleHuntSuggestion(text, chatUsername, source);
 }

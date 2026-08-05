@@ -22,6 +22,7 @@ import streamGamesRoutes from "@/routes/streamGames";
 import predictionsRoutes from "@/routes/predictions";
 import ladderRoutes from "@/routes/ladder";
 import giveawaysRoutes from "@/routes/giveaways";
+import bingoRoutes from "@/routes/bingo";
 
 const app = express();
 
@@ -50,6 +51,7 @@ app.use("/api/stream-games", streamGamesRoutes);
 app.use("/api/predictions", predictionsRoutes);
 app.use("/api/ladder", ladderRoutes);
 app.use("/api/giveaways", giveawaysRoutes);
+app.use("/api/bingo", bingoRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

@@ -65,11 +65,13 @@ export const API_ENDPOINTS = {
   SITE_CONTENT: (key: string) => `${API_URL}/api/site-content/${key}`,
 
   WAGER_LEADERBOARDS: `${API_URL}/api/wager-leaderboard`,
+  WAGER_LEADERBOARD_ARCHIVED: `${API_URL}/api/wager-leaderboard/archived`,
   WAGER_LEADERBOARD_LIVE: `${API_URL}/api/wager-leaderboard/live`,
   WAGER_LEADERBOARD: (id: string) => `${API_URL}/api/wager-leaderboard/${id}`,
   WAGER_LEADERBOARD_ENTRIES: (id: string) => `${API_URL}/api/wager-leaderboard/${id}/entries`,
   WAGER_LEADERBOARD_ENTRY: (id: string, entryId: string) => `${API_URL}/api/wager-leaderboard/${id}/entries/${entryId}`,
   WAGER_LEADERBOARD_LIVE_TOGGLE: (id: string) => `${API_URL}/api/wager-leaderboard/${id}/live`,
+  WAGER_LEADERBOARD_ARCHIVE: (id: string) => `${API_URL}/api/wager-leaderboard/${id}/archive`,
 
   GIVEAWAYS: `${API_URL}/api/giveaways`,
   GIVEAWAY: (id: string) => `${API_URL}/api/giveaways/${id}`,
@@ -107,6 +109,23 @@ export const API_ENDPOINTS = {
   LADDER_RUN_FAIL: (runId: string) => `${API_URL}/api/ladder/runs/${runId}/fail`,
   LADDER_RUN_CASHOUT: (runId: string) => `${API_URL}/api/ladder/runs/${runId}/cashout`,
   LADDER_RUN_CLIMB: (runId: string) => `${API_URL}/api/ladder/runs/${runId}/climb`,
+
+  BINGO_GAMES: (slug: string) => `${API_URL}/api/bingo/games/${slug}`,
+  BINGO_ACTIVE_GAME: (slug: string) => `${API_URL}/api/bingo/games/${slug}/active`,
+  BINGO_GAME: (id: string) => `${API_URL}/api/bingo/${id}`,
+  BINGO_GAME_KEYWORD: (id: string) => `${API_URL}/api/bingo/${id}/keyword`,
+  BINGO_GAME_OPEN_REGISTRATION: (id: string) => `${API_URL}/api/bingo/${id}/open-registration`,
+  BINGO_GAME_START: (id: string) => `${API_URL}/api/bingo/${id}/start`,
+  BINGO_GAME_SPIN: (id: string) => `${API_URL}/api/bingo/${id}/spin-cell`,
+  BINGO_GAME_DRAW: (id: string) => `${API_URL}/api/bingo/${id}/draw-player`,
+  BINGO_CELL_SLOT: (id: string, cellId: string) => `${API_URL}/api/bingo/${id}/cells/${cellId}/slot`,
+  BINGO_GAME_RESULT: (id: string) => `${API_URL}/api/bingo/${id}/result`,
+  BINGO_GAME_COMPLETE: (id: string) => `${API_URL}/api/bingo/${id}/complete`,
+  BINGO_GAME_UNLIVE: (id: string) => `${API_URL}/api/bingo/${id}/unlive`,
+  BINGO_GAME_CANCEL: (id: string) => `${API_URL}/api/bingo/${id}/cancel`,
+  BINGO_GAME_PARTICIPANTS: (id: string) => `${API_URL}/api/bingo/${id}/participants`,
+  BINGO_GAME_PARTICIPANT: (id: string, chatUsername: string) =>
+    `${API_URL}/api/bingo/${id}/participants/${encodeURIComponent(chatUsername)}`,
 } as const;
 
 export interface PublicUser {
@@ -388,6 +407,19 @@ export interface WagerEntry {
   avatarUrl: string | null;
 }
 
+export interface WagerPrizeTier {
+  rank: number;
+  amount: number;
+}
+
+export interface WagerWinner {
+  rank: number;
+  name: string;
+  avatarUrl: string | null;
+  wagered: number;
+  prizeAmount: number;
+}
+
 export interface WagerLeaderboard {
   id: string;
   title: string | null;
@@ -398,7 +430,12 @@ export interface WagerLeaderboard {
   /** Sorted highest wagered first. */
   entries: WagerEntry[];
   isLive: boolean;
+  startsAt: string | null;
   endsAt: string | null;
+  /** Per-rank payout; null means winner-takes-all of prizeAmount. */
+  prizeDistribution: WagerPrizeTier[] | null;
+  archivedAt: string | null;
+  winners: WagerWinner[];
   createdById: string;
   createdAt: string;
   updatedAt: string;
@@ -514,4 +551,68 @@ export interface LadderRun {
   createdAt: string;
   updatedAt: string;
   endedAt: string | null;
+}
+
+// ---------- Bonus Bingo ----------
+
+export type BingoStatus = "DRAFT" | "REGISTRATION" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+export type BingoCellStatus = "EMPTY" | "ACTIVE" | "GREEN";
+
+export interface BingoUserRef {
+  id: string;
+  displayName: string;
+  kickUsername: string | null;
+  avatarUrl: string | null;
+}
+
+export interface BingoCell {
+  id: string;
+  gameId: string;
+  row: number;
+  col: number;
+  status: BingoCellStatus;
+  slotName: string | null;
+  claimedByChatUsername: string | null;
+  claimedByUserId: string | null;
+  claimedAt: string | null;
+  claimedBy: BingoUserRef | null;
+}
+
+export interface BingoParticipant {
+  id: string;
+  gameId: string;
+  chatUsername: string;
+  userId: string | null;
+  preferredSlot: string | null;
+  joinedAt: string;
+  user: BingoUserRef | null;
+}
+
+export interface BingoLineWin {
+  id: string;
+  gameId: string;
+  lineType: "row" | "col" | "diag";
+  lineIndex: number;
+  pointsEach: number;
+  winners: string[];
+  completedAt: string;
+}
+
+export interface BingoGame {
+  id: string;
+  streamGameId: string;
+  title: string;
+  keyword: string;
+  gridSize: number;
+  linePoints: number;
+  status: BingoStatus;
+  currentCellId: string | null;
+  currentChatUsername: string | null;
+  createdById: string;
+  createdAt: string;
+  updatedAt: string;
+  completedAt: string | null;
+  cells: BingoCell[];
+  participants: BingoParticipant[];
+  lineWins: BingoLineWin[];
 }

@@ -23,7 +23,7 @@ function getTimeLeft(endsAt: string) {
   };
 }
 
-function Countdown({ endsAt }: { endsAt: string }) {
+function Countdown({ endsAt, label, endedLabel }: { endsAt: string; label?: string; endedLabel: string }) {
   const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(endsAt));
 
   useEffect(() => {
@@ -32,7 +32,7 @@ function Countdown({ endsAt }: { endsAt: string }) {
   }, [endsAt]);
 
   if (timeLeft.ended) {
-    return <p className="mt-6 text-center text-sm font-semibold text-ash-400">Race has ended</p>;
+    return <p className="mt-6 text-center text-sm font-semibold text-ash-400">{endedLabel}</p>;
   }
 
   const units = [
@@ -43,29 +43,53 @@ function Countdown({ endsAt }: { endsAt: string }) {
   ];
 
   return (
-    <div className="mx-auto mt-6 flex max-w-md items-center justify-center gap-3">
-      {units.map((unit) => (
-        <div key={unit.label} className="flex flex-col items-center rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 min-w-[64px]">
-          <span className="font-display text-2xl font-bold text-white tabular-nums">
-            {String(unit.value).padStart(2, "0")}
-          </span>
-          <span className="font-heading text-[10px] font-semibold uppercase tracking-widest text-ash-400">
-            {unit.label}
-          </span>
-        </div>
-      ))}
+    <div className="mt-6">
+      {label && (
+        <p className="font-heading text-center text-xs font-semibold uppercase tracking-widest text-ash-400">{label}</p>
+      )}
+      <div className="mx-auto mt-2 flex max-w-md items-center justify-center gap-3">
+        {units.map((unit) => (
+          <div key={unit.label} className="flex flex-col items-center rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 min-w-[64px]">
+            <span className="font-display text-2xl font-bold text-white tabular-nums">
+              {String(unit.value).padStart(2, "0")}
+            </span>
+            <span className="font-heading text-[10px] font-semibold uppercase tracking-widest text-ash-400">
+              {unit.label}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
+function ordinal(n: number): string {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`;
+}
+
 export default function LeaderboardPage() {
   const [board, setBoard] = useState<WagerLeaderboard | null | undefined>(undefined);
+  const [notStartedYet, setNotStartedYet] = useState(false);
 
   useEffect(() => {
     fetchLiveWagerLeaderboard()
       .then(setBoard)
       .catch(() => setBoard(null));
   }, []);
+
+  useEffect(() => {
+    if (!board?.startsAt) {
+      setNotStartedYet(false);
+      return;
+    }
+    const startsAtMs = new Date(board.startsAt).getTime();
+    const tick = () => setNotStartedYet(startsAtMs > Date.now());
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [board?.startsAt]);
 
   return (
     <Section>
@@ -75,7 +99,21 @@ export default function LeaderboardPage() {
         description="Ranked by how much you've wagered — top of the board takes the prize."
       />
 
-      {board?.endsAt && <Countdown endsAt={board.endsAt} />}
+      {notStartedYet && board?.startsAt && <Countdown endsAt={board.startsAt} label="Race starts in" endedLabel="Race is starting…" />}
+      {!notStartedYet && board?.endsAt && <Countdown endsAt={board.endsAt} endedLabel="Race has ended" />}
+
+      {board?.prizeDistribution && board.prizeDistribution.length > 0 && (
+        <div className="mx-auto mt-6 flex max-w-xl flex-wrap items-center justify-center gap-2">
+          {board.prizeDistribution.map((tier) => (
+            <span
+              key={tier.rank}
+              className="font-heading rounded-full border border-gold-500/30 bg-gold-500/5 px-3 py-1 text-xs font-semibold text-gold-300"
+            >
+              {ordinal(tier.rank)} &middot; {formatCurrency(tier.amount, board.currency)}
+            </span>
+          ))}
+        </div>
+      )}
 
       {board === undefined ? (
         <p className="mt-12 text-center text-sm text-ash-400">Loading…</p>
