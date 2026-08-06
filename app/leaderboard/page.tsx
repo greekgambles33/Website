@@ -62,12 +62,6 @@ function Countdown({ endsAt, label, endedLabel }: { endsAt: string; label?: stri
   );
 }
 
-function ordinal(n: number): string {
-  const s = ["th", "st", "nd", "rd"];
-  const v = n % 100;
-  return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`;
-}
-
 const podiumRankColors = ["text-gold-400", "text-ash-100", "text-lava-400"];
 const podiumBadgeStyles = [
   "bg-gold-400 text-ash-950",
@@ -161,19 +155,6 @@ export default function LeaderboardPage() {
 
       {notStartedYet && board?.startsAt && <Countdown endsAt={board.startsAt} label="Race starts in" endedLabel="Race is starting…" />}
       {!notStartedYet && board?.endsAt && <Countdown endsAt={board.endsAt} endedLabel="Race has ended" />}
-
-      {board?.prizeDistribution && board.prizeDistribution.length > 0 && (
-        <div className="mx-auto mt-6 flex max-w-xl flex-wrap items-center justify-center gap-2">
-          {board.prizeDistribution.map((tier) => (
-            <span
-              key={tier.rank}
-              className="font-heading rounded-full border border-gold-500/30 bg-gold-500/5 px-3 py-1 text-xs font-semibold text-gold-300"
-            >
-              {ordinal(tier.rank)} &middot; {formatCurrency(tier.amount, board.currency)}
-            </span>
-          ))}
-        </div>
-      )}
 
       {board === undefined ? (
         <p className="mt-12 text-center text-sm text-ash-400">Loading…</p>
