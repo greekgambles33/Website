@@ -27,6 +27,7 @@ export const API_ENDPOINTS = {
 
   HUNTS: `${API_URL}/api/hunts`,
   HUNT_LIVE: `${API_URL}/api/hunts/live`,
+  HUNT_KNOWN_SLOTS: `${API_URL}/api/hunts/known-slots`,
   HUNT_BY_SLUG: (slug: string) => `${API_URL}/api/hunts/slug/${slug}`,
   HUNT: (id: string) => `${API_URL}/api/hunts/${id}`,
   HUNT_BONUSES: (id: string) => `${API_URL}/api/hunts/${id}/bonuses`,
@@ -227,6 +228,12 @@ export interface HuntSlotSuggestion {
   chatUsername: string;
   source: "TWITCH" | "KICK";
   createdAt: string;
+}
+
+/** A slot name (and last-used provider) pulled from past hunts, for admin autocomplete. */
+export interface KnownSlot {
+  slotName: string;
+  provider: string;
 }
 
 /** Keep in sync with PROVIDER_ALIASES canonical names in

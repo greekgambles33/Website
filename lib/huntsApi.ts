@@ -1,6 +1,6 @@
 "use client";
 
-import { API_ENDPOINTS, type Hunt, type HuntGuessWinner, type HuntSlotSuggestion } from "@/lib/api";
+import { API_ENDPOINTS, type Hunt, type HuntGuessWinner, type HuntSlotSuggestion, type KnownSlot } from "@/lib/api";
 import { getAccessToken } from "@/lib/authPersistence";
 
 export class HuntApiError extends Error {}
@@ -46,6 +46,11 @@ export async function fetchHuntBySlug(slug: string): Promise<Hunt> {
 export async function fetchHunts(): Promise<Hunt[]> {
   const data = await huntFetch<{ hunts: Hunt[] }>(API_ENDPOINTS.HUNTS);
   return data.hunts;
+}
+
+export async function fetchKnownSlots(): Promise<KnownSlot[]> {
+  const data = await huntFetch<{ slots: KnownSlot[] }>(API_ENDPOINTS.HUNT_KNOWN_SLOTS, { cache: "no-store" });
+  return data.slots;
 }
 
 export async function createHunt(input: { name: string; startBalance: number; currency?: string }): Promise<Hunt> {

@@ -42,9 +42,10 @@ import {
   fetchSlotSuggestions,
   dismissSlotSuggestion,
   retagSlotSuggestion,
+  fetchKnownSlots,
   HuntApiError,
 } from "@/lib/huntsApi";
-import { SLOT_PROVIDERS, type Hunt, type HuntBonus, type HuntSlotSuggestion } from "@/lib/api";
+import { SLOT_PROVIDERS, type Hunt, type HuntBonus, type HuntSlotSuggestion, type KnownSlot } from "@/lib/api";
 
 const SUGGESTIONS_POLL_MS = 5000;
 
@@ -578,6 +579,21 @@ function BonusModal({
   const [note, setNote] = useState(initial?.note ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [knownSlots, setKnownSlots] = useState<KnownSlot[]>([]);
+
+  useEffect(() => {
+    fetchKnownSlots()
+      .then(setKnownSlots)
+      .catch(() => {});
+  }, []);
+
+  const handleSlotNameChange = (value: string) => {
+    setSlotName(value);
+    if (!provider.trim()) {
+      const match = knownSlots.find((s) => s.slotName.toLowerCase() === value.trim().toLowerCase());
+      if (match) setProvider(match.provider);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -610,10 +626,17 @@ function BonusModal({
             <input
               autoFocus
               value={slotName}
-              onChange={(e) => setSlotName(e.target.value)}
+              onChange={(e) => handleSlotNameChange(e.target.value)}
               placeholder="Sugar Rush 1000"
               className="ggb-input"
+              list="known-slot-names"
+              autoComplete="off"
             />
+            <datalist id="known-slot-names">
+              {knownSlots.map((s) => (
+                <option key={s.slotName} value={s.slotName} />
+              ))}
+            </datalist>
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Provider">

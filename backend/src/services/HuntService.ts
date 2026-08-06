@@ -49,6 +49,27 @@ export class HuntService {
     return prisma.hunt.findMany({ orderBy: { createdAt: "desc" } });
   }
 
+  /** Distinct slot names (with their most recently used provider) pulled from past hunts, for admin autocomplete. */
+  static async listKnownSlots(): Promise<{ slotName: string; provider: string }[]> {
+    const hunts = await prisma.hunt.findMany({
+      select: { bonuses: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+      take: 200,
+    });
+
+    const byKey = new Map<string, { slotName: string; provider: string }>();
+    for (const hunt of hunts) {
+      const bonuses = (hunt.bonuses as unknown as HuntBonus[]) ?? [];
+      for (const bonus of bonuses) {
+        const key = bonus.slotName.trim().toLowerCase();
+        if (!key || byKey.has(key)) continue;
+        byKey.set(key, { slotName: bonus.slotName.trim(), provider: bonus.provider });
+      }
+    }
+
+    return Array.from(byKey.values()).sort((a, b) => a.slotName.localeCompare(b.slotName));
+  }
+
   static async get(id: string): Promise<Hunt> {
     const hunt = await prisma.hunt.findUnique({ where: { id } });
     if (!hunt) throw createError.notFound("Hunt not found");
