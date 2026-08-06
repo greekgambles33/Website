@@ -57,6 +57,11 @@ export const HuntController = {
     res.json({ success: true, hunts: hunts.map(serializeHunt) });
   }),
 
+  listKnownSlots: asyncHandler(async (_req: Request, res: Response) => {
+    const slots = await HuntService.listKnownSlots();
+    res.json({ success: true, slots });
+  }),
+
   getLive: asyncHandler(async (_req: Request, res: Response) => {
     const hunt = await HuntService.getLive();
     res.json({ success: true, hunt: hunt ? serializeHunt(hunt) : null });

@@ -7,6 +7,7 @@ const router = Router();
 // Public — anyone can watch the live hunt or a specific (e.g. completed/shared) hunt.
 router.get("/live", HuntController.getLive);
 router.get("/slug/:slug", HuntController.getBySlug);
+router.get("/known-slots", authMiddleware, moderatorMiddleware, HuntController.listKnownSlots);
 router.get("/:id", HuntController.get);
 router.get("/:id/guess-summary", HuntController.getGuessSummary);
 

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Loader2, ArrowLeft, Trash2, Pencil, Users, Dices, UserCheck, CheckCircle2, XCircle, Flag, RotateCcw, Ban, Plus } from "lucide-react";
+import { Loader2, ArrowLeft, Trash2, Pencil, Users, Dices, UserCheck, CheckCircle2, XCircle, Flag, RotateCcw, Ban, Plus, Copy } from "lucide-react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -77,6 +77,11 @@ export default function BonusBingoControlPanel() {
   const selected = games.find((g) => g.id === selectedId) ?? null;
   const active = games.find((g) => g.status === "DRAFT" || g.status === "REGISTRATION" || g.status === "ACTIVE") ?? null;
   const history = games.filter((g) => g.status === "COMPLETED" || g.status === "CANCELLED");
+
+  const copyObsLink = () => {
+    navigator.clipboard.writeText(`${window.location.origin}/overlay/bonus-bingo`);
+    alert("OBS browser-source URL copied to clipboard");
+  };
 
   const runAction = async (action: () => Promise<unknown>) => {
     setBusy(true);
@@ -252,6 +257,12 @@ export default function BonusBingoControlPanel() {
               </div>
 
               <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  onClick={copyObsLink}
+                  className="font-heading flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-ash-300 hover:text-white"
+                >
+                  <Copy size={13} /> OBS Link
+                </button>
                 {selected.status === "DRAFT" && (
                   <Button size="sm" disabled={busy} onClick={() => runAction(() => openBingoRegistration(selected.id))}>
                     Open Registration
